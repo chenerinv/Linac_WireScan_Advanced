@@ -29,22 +29,11 @@ Program to collect Linac wire scanner data using the fastest motor speed.
 
 
 ## Completed Tasks
-- fix plotting spacing: 
- - separate the three subplots in the liveplot into three separate tk frames and three separate plots (or two, if it's the two-wire)
+- fix plotting spacing: separate the three subplots in the liveplot into three separate tk frames and three separate plots (or two, if it's the two-wire)
 - fix csv/dict parsing when there's an empty list/no data? 
 - abort / lockedentries deadlock - thank you Rich
 - improve the protections on starting a new scan when one is existing -- add a finally event? i think it could be that you abort scan but something stalls on the finally statement and the new scan is given the go ahead even though the previous is unfinished because it's techincally set, but not joined. i agree that joining is not helpful here -- i must have lockentries accessed from the finally statement, and i cannot join from mainthread. fine. 
-- assemble metadata collection & the requisite file (see notebook pg. 79)
- - timestamp
- - folder
- - direction
- - event
- - user comment
- - source L:SOURCE
- - D7TOR
- - pulse length
- - frequency
- - (eventually) collimator status
+- assemble metadata collection & the requisite file (see notebook pg. 79): timestamp, folder, direction, event, user comment, source L:SOURCE, D7TOR, pulse length, frequency, (eventually) collimator status
 - bug when you choose an event that isn't in the timeline at the moment...i think it can't break the acsys loop because it's not getting any events?? add a timer for finding event? - fixed by adding a periodic readback at tag -1...
 - add messagebox message about scan completion
 - add wires out button functionality, incorporate it into abort
@@ -63,5 +52,4 @@ Program to collect Linac wire scanner data using the fastest motor speed.
 ## Rejected Ideas
 - consider locking the abort button until the scan starts...i don't think so 
 - do we want a different thread working on analysis separate from the scan thread's finally? I don't really think so. i don't think there's a reason to start a "queue" of sorts for analysis. theoretically, analysis should be quick and it is fine to execute within the scope of the scan. if analysis is taking so long, there are other things that should be of concern and you really shouldn't initiate another scan. 
-- locking access to the data: 
- - i understand why ralitsa does this in her code: read_many / set_many access to write to it, while get_thread_data actually clears the data. so there are two sources doing writing. but i would argue that only runscan accesses my data, and therefore there's no need to lock it. yes, when i read it, it is possible that it could be wonky from being simultaneously written. BUT consider that i don't really care about the quality of temporary data more than I care about the scan data collection being collected live & on schedule. i would prefer to prioritize the writing access to the data, because all of the readings are just temporary use cases. 
+- locking access to the data: i understand why ralitsa does this in her code: read_many / set_many access to write to it, while get_thread_data actually clears the data. so there are two sources doing writing. but i would argue that only runscan accesses my data, and therefore there's no need to lock it. yes, when i read it, it is possible that it could be wonky from being simultaneously written. BUT consider that i don't really care about the quality of temporary data more than I care about the scan data collection being collected live & on schedule. i would prefer to prioritize the writing access to the data, because all of the readings are just temporary use cases. 
