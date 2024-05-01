@@ -6,11 +6,12 @@ import itertools
 import basicdata
 
 def checktype(value,type):
+    """Check the type of a value: int, float, string, etc."""
     if type == int: 
         try: 
             f = float(value)
             if f.is_integer() is True: 
-                i = int(value) # this is rounding floats!!!  TODO FIXME
+                i = int(value) 
                 return True, i
             else: 
                 return False, value
@@ -25,7 +26,14 @@ def checktype(value,type):
     else: # strings and list
         return isinstance(value,type), value
 
+def strtonum(value): 
+    f = float(value)
+    if f.is_integer() is True: 
+        f = int(value) 
+    return f
+
 def dicttojson(indict,jsonstr): 
+    """Save dict as a json."""
     outdict = indict.copy()
     for item in ["Additional Parameters", "Monitors", "Monitor Min", "Monitor Max"]: 
         if item in list(outdict.keys()): 
@@ -36,7 +44,7 @@ def dicttojson(indict,jsonstr):
         json.dump(outdict,outfile)
 
 def dicttocsv(indict,csvstr): 
-    # writing dict to csv
+    """Save dict as a csv."""
     if csvstr[-4:] != ".csv": 
         csvstr +=".csv"
     with open(csvstr,"w",newline='') as f: # NOTE: the newline thing is because of windows & Python3. probably take out for non windows?
@@ -47,6 +55,7 @@ def dicttocsv(indict,csvstr):
     return 
 
 def csvtodict(csvstr): 
+    """Import a csv as a dict."""
     def convert(st): 
         try:
             if ((len(st) > 0) and (st[0] == "[")): # list 
@@ -78,7 +87,9 @@ def csvtodict(csvstr):
     return outdict
 
 def rawtowires(indict,modstr): 
+    """Convert raw format data from acsys into a dict with keys for each wire."""
     def checklengths(): 
+        """Do a check that each wire has the same amount of data for that time, or fill in the gaps."""
         keylens = []
         for key in keylist: 
             keylens.append(len(outdict[key]))
@@ -94,7 +105,7 @@ def rawtowires(indict,modstr):
     tagdict = {}
     j = 1
     keylist = basicdata.pdict[modstr]+basicdata.sdict[modstr]
-    for key in keylist: # this assumes that we use the same pattern, which is fair
+    for key in keylist: # this assumes that we use the same pattern, which is fine
         outdict[key] = []
         tagdict[j] = key
         j=j+1
@@ -110,7 +121,6 @@ def rawtowires(indict,modstr):
             outdict[tagdict[indict["tags"][rownum]]].append(indict["data"][rownum])
     checklengths() # need to call again to check that the last set rounded off right.
     return outdict
-
 
 if __name__ == "__main__":
     checktype()

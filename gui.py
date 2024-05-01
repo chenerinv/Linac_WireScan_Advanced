@@ -1,40 +1,36 @@
 import tkinter as tk
-from tkinter import ttk, filedialog, messagebox
-import basicdata
-import basicfuncs
-from acsyscontrol import acsyscontrol 
-
+from tkinter import ttk, filedialog
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from matplotlib.backend_bases import key_press_handler
-
-#from matplotlib import style
-
-import numpy as np
 import math
 import os
 import json
 import time
+import numpy as np
+
+import basicdata
+import basicfuncs
+from acsyscontrol import acsyscontrol 
+from dataanalysis import dataanalysis
 
 class WireScanApp(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title("Fast Wire Scan App")
+        self.title("Constant Speed Wire Scan App")
         self.geometry("850x365")
         self.minsize(850,365)
-        self.entries = {}
-        self.buttons = {}
-        self.setpout = {}
-        self.metad = {}
-        self.readbacks = {}
-        self.pastreadbacks = {1:[], 2:[]}
+        self.entries = {} # tk entries
+        self.buttons = {} # tk buttons
+        self.setpout = {} # dictionary with setup data
+        self.metad = {} # dictionary with metadata
+        self.readbacks = {} # dictionary for live readbacks
+        self.pastreadbacks = {1:[], 2:[]} # reference info for killing and restarting a plot
+        self.plotobjects1 = {"Frame":{},"Canvas":{},"Fig":{},"Ax":{},"ScatterObj":{}} # matplotlib objects
+        self.plotobjects2 = {"Frame":{},"Canvas":{},"Fig":{},"Ax":{},"ScatterObj":{}} # matplotlib objects
         self.acsyscontrol = acsyscontrol()
-        self.plotobjects = {"Frame":{},"Canvas":{},"Fig":{},"Ax":{},"ScatterObj":{}}
-        self.Aobjects = {}
-
-        # want to deprecate these
-        self.plots = {}
-        self.scatterobj = {}
+        self.datanalysis = dataanalysis()
+        self.anaentries = {} # for analysis tab
+        self.treedata = {} # for analysis tab
 
         # Create the tab control
         self.tabControl = ttk.Notebook(self)
@@ -60,7 +56,7 @@ class WireScanApp(tk.Tk):
         self.tab3.columnconfigure(0,weight=1,minsize=425)
         self.tab3.columnconfigure(1,weight=1,minsize=425)
 
-        # Create Advanced Parameters Window (hidden)
+        # Create Advanced Parameters Window (hidden until opened)
         self.AdvChild = Adv_Window(self)
         self.AdvChild.withdraw()
 
@@ -72,180 +68,316 @@ class WireScanApp(tk.Tk):
     
     def create_widgets_in_tab1(self): 
         # create subframes in tab1
-        frame11 = ttk.LabelFrame(self.tab1,borderwidth=5,relief="solid",labelanchor="nw",text="Quick Setup")
-        frame11.grid(column=0,row=0,columnspan=1,pady=1,sticky="nw")
-        frame12 = ttk.Frame(self.tab1)
-        frame12.grid(column=0,row=1,columnspan=1,pady=1,sticky="w")
-        frame13 = ttk.LabelFrame(self.tab1,borderwidth=5,relief="solid",labelanchor="nw",text="Control")
-        frame13.grid(column=0,row=2,columnspan=1,pady=1,sticky="w")
-        frame15 = ttk.LabelFrame(self.tab1,borderwidth=5,relief="solid",labelanchor="n",text="Messages")
-        frame15.grid(column=0,row=4,columnspan=1,pady=1,sticky="wes")
-        frame21 = ttk.Frame(self.tab1,borderwidth=5,relief="solid")
-        frame21.grid(column=1,row=0,columnspan=1,rowspan=5,pady=1,sticky="nesw")
-        frame14 = ttk.LabelFrame(self.tab1,borderwidth=5,relief="solid",labelanchor="nw",text="Additional Parameter Readbacks")
-        frame14.grid(column=0,row=3,columnspan=1,pady=1,sticky="w")
+        frame00 = ttk.LabelFrame(self.tab1,borderwidth=5,relief="solid",labelanchor="nw",text="Quick Setup")
+        frame00.grid(column=0,row=0,columnspan=1,pady=1,sticky="nw")
+        frame01 = ttk.Frame(self.tab1)
+        frame01.grid(column=0,row=1,columnspan=1,pady=1,sticky="w")
+        frame02 = ttk.LabelFrame(self.tab1,borderwidth=5,relief="solid",labelanchor="nw",text="Control")
+        frame02.grid(column=0,row=2,columnspan=1,pady=1,sticky="w")
+        frame04 = ttk.LabelFrame(self.tab1,borderwidth=5,relief="solid",labelanchor="n",text="Messages")
+        frame04.grid(column=0,row=4,columnspan=1,pady=1,sticky="wes")
+        frame10 = ttk.Frame(self.tab1,borderwidth=5,relief="solid")
+        frame10.grid(column=1,row=0,columnspan=1,rowspan=5,pady=1,sticky="nesw")
+        frame03 = ttk.LabelFrame(self.tab1,borderwidth=5,relief="solid",labelanchor="nw",text="Additional Parameter Readbacks")
+        frame03.grid(column=0,row=3,columnspan=1,pady=1,sticky="w")
 
-        # frame14
-        s1 = tk.Scrollbar(frame15)
+        # frame04
+        s1 = tk.Scrollbar(frame04)
         s1.pack(side=tk.RIGHT,fill=tk.Y)
-        text1 = tk.Text(frame15,height = 4,width=56,state="disabled",yscrollcommand=s1.set,wrap=tk.WORD)
+        text1 = tk.Text(frame04,height = 4,width=56,state="disabled",yscrollcommand=s1.set,wrap=tk.WORD)
         text1.pack(side=tk.LEFT,fill=tk.Y)
         self.entries["Messages"] = text1
         s1.config(command=text1.yview)
-        frame121 = ttk.LabelFrame(frame12,borderwidth=5,relief="solid",labelanchor="nw",text="Wire")
-        frame121.grid(column=0,row=0,columnspan=1,pady=1,sticky="w")
-        frame122 = ttk.LabelFrame(frame12,borderwidth=5,relief="solid",labelanchor="nw",text="Readbacks")
-        frame122.grid(column=1,row=0,columnspan=1,pady=1,sticky="e") 
-        # note frame122 can't be made within readbackpopup() because it is nested in frame12
-        # however, frame 14 can be made in its function because its up a level.
 
-        # frame11
-        text11 = "Setup Parameters"
-        label11 = ttk.Label(frame11, text=text11)
-        label11.grid(column=0, row=0, sticky='w', padx=5, pady=5)
-        ToolTip(label11,basicdata.tooltips[text11])
-        entry11 = ttk.Entry(frame11)
-        entry11.grid(column=1, row=0, sticky='ew', padx=5, pady=2)
-        self.entries[text11] = entry11
-        button11 = ttk.Button(frame11, text='Browse', command=lambda e=entry11, t=text11: self.browse(e,t))
-        button11.grid(column=2, row=0, padx=5, pady=2)
-        self.buttons["Browse1"] = button11
-        upload_button = ttk.Button(frame11, text='Upload', command=lambda: self.loadsetp(frame122,frame21)) #TODO remove & integrate into browse1
+        # frame01
+        frame010 = ttk.LabelFrame(frame01,borderwidth=5,relief="solid",labelanchor="nw",text="Wire")
+        frame010.grid(column=0,row=0,columnspan=1,pady=1,sticky="w")
+        frame011 = ttk.LabelFrame(frame01,borderwidth=5,relief="solid",labelanchor="nw",text="Readbacks")
+        frame011.grid(column=1,row=0,columnspan=1,pady=1,sticky="e") # nested in frame 01, so must be made here not readbackpopup()
+
+        # frame00
+        text00 = "Setup Parameters"
+        label00 = ttk.Label(frame00, text=text00)
+        label00.grid(column=0, row=0, sticky='w', padx=5, pady=5)
+        ToolTip(label00,basicdata.tooltips[text00])
+        entry00 = ttk.Entry(frame00)
+        entry00.grid(column=1, row=0, sticky='ew', padx=5, pady=2)
+        self.entries[text00] = entry00
+        browse_button_00 = ttk.Button(frame00, text='Browse', command=lambda e=entry00, t=text00: self.browse(e,t))
+        browse_button_00.grid(column=2, row=0, padx=5, pady=2)
+        self.buttons["Browse1"] = browse_button_00
+        upload_button = ttk.Button(frame00, text='Upload', command=lambda: self.loadsetp(frame011,frame10)) #TODO remove & integrate into browse1
         upload_button.grid(column=3, row=0, sticky='e', padx=5, pady=2)
         self.buttons["Upload"] = upload_button
 
-        # frame121
+        # frame010
         labels = ["Wire","Out Limit","In Limit", "Event"]
         for i, text in enumerate(labels):
-            label = ttk.Label(frame121, text=text)
+            label = ttk.Label(frame010, text=text)
             label.grid(column=i, row=0, sticky='n', padx=2, pady=2)
             ToolTip(label,basicdata.tooltips[text])
-        entry1 = ttk.Entry(frame121,width=8)
-        entry1.grid(column=1, row=1, sticky='s', padx=2, pady=2)
-        self.entries[labels[1]] = entry1
-        entry2 = ttk.Entry(frame121,width=8)
-        entry2.grid(column=2, row=1, sticky='s', padx=2, pady=2)
-        self.entries[labels[2]] = entry2
-        combo1 = ttk.Combobox(frame121,state="readonly",values=list(basicdata.pdict.keys()),width=4) 
-        combo1.grid(column=0, row=1, sticky='s', padx=2, pady=2)
-        combo1.bind("<<ComboboxSelected>>", lambda event: self.selectedwire(frame122,frame21))
-        self.entries[labels[0]] = combo1
-        combo2 = ttk.Combobox(frame121,state="readonly",values=basicdata.events,width=3)
-        combo2.grid(column=3, row=1, sticky='s', padx=2, pady=2)
-        self.entries[labels[3]] = combo2
-        adv_button = ttk.Button(frame121, text="Advanced Settings", command=self.open_advwindow)
+        entry010_0 = ttk.Entry(frame010,width=8)
+        entry010_0.grid(column=1, row=1, sticky='s', padx=2, pady=2)
+        self.entries[labels[1]] = entry010_0
+        entry010_1 = ttk.Entry(frame010,width=8)
+        entry010_1.grid(column=2, row=1, sticky='s', padx=2, pady=2)
+        self.entries[labels[2]] = entry010_1
+        combo010_0 = ttk.Combobox(frame010,state="readonly",values=list(basicdata.pdict.keys()),width=4) 
+        combo010_0.grid(column=0, row=1, sticky='s', padx=2, pady=2)
+        combo010_0.bind("<<ComboboxSelected>>", lambda event: self.selectedwire(frame011,frame10))
+        self.entries[labels[0]] = combo010_0
+        combo010_1 = ttk.Combobox(frame010,state="readonly",values=basicdata.events,width=3)
+        combo010_1.grid(column=3, row=1, sticky='s', padx=2, pady=2)
+        self.entries[labels[3]] = combo010_1
+        adv_button = ttk.Button(frame010, text="Advanced Settings", command=self.open_advwindow)
         adv_button.grid(column=0, row=2, columnspan=4, padx=1, pady=1)
 
-        # frame 122
+        # frame011 (Readbacks), frame10 (Plots)
             # blank unless selectedwire activates
 
-        # frame13
-        text13 = "Save Directory"
-        label13 = ttk.Label(frame13, text=text13)
-        label13.grid(column=0, row=0, sticky='w', padx=5, pady=5)
-        ToolTip(label13,basicdata.tooltips[text13])
-        entry13 = ttk.Entry(frame13)
-        entry13.grid(column=1, row=0, sticky='ew', padx=5, pady=2)
-        self.entries[text13] = entry13
-        button13 = ttk.Button(frame13, text='Browse', command=lambda e=entry13, t=text13: self.browse(e,t))
-        button13.grid(column=2, row=0, sticky='w', padx=5, pady=2)
-        self.buttons["Browse2"] = button13
-        start_button = ttk.Button(frame13, text="Start", command= lambda: self.startbutton(frame14))
+        # frame03 (Additional Parameters)
+            # blank unless scan is started
+
+        # frame02
+        text02 = "Save Directory"
+        label02 = ttk.Label(frame02, text=text02)
+        label02.grid(column=0, row=0, sticky='w', padx=5, pady=5)
+        ToolTip(label02,basicdata.tooltips[text02])
+        entry02 = ttk.Entry(frame02)
+        entry02.grid(column=1, row=0, sticky='ew', padx=5, pady=2)
+        self.entries[text02] = entry02
+        browse_button_02 = ttk.Button(frame02, text='Browse', command=lambda e=entry02, t=text02: self.browse(e,t))
+        browse_button_02.grid(column=2, row=0, sticky='w', padx=5, pady=2)
+        self.buttons["Browse2"] = browse_button_02
+        start_button = ttk.Button(frame02, text="Start", command= lambda: self.startbutton(frame03))
         start_button.grid(column=0, row=1, columnspan=1, padx=1, pady=1)
         self.buttons["Start"] = start_button
-        wout_button = ttk.Button(frame13, text="Wires Out", command=self.wiresout)
+        wout_button = ttk.Button(frame02, text="Wires Out", command=self.wiresout)
         wout_button.grid(column=1, row=1, columnspan=1, padx=1, pady=1)
         self.buttons["Wires Out"] = wout_button
-        abort_button = ttk.Button(frame13, text="Abort", command=self.abortbutton)
+        abort_button = ttk.Button(frame02, text="Abort", command=self.abortbutton)
         abort_button.grid(column=2, row=1, columnspan=1, padx=1, pady=1)
         self.buttons["Abort"] = abort_button
 
-        # frame21
-        # empty until a wire is selected
-
     def create_widgets_in_tab2(self): 
-        frameA1 = ttk.LabelFrame(self.tab2,borderwidth=5,relief="solid",labelanchor="nw",text="Load Data")
-        frameA1.grid(column=0,row=0,columnspan=1,pady=1,sticky="nw")
-        frameA2 = ttk.LabelFrame(self.tab2,borderwidth=5,relief="solid",labelanchor="nw",text="Analysis")
-        frameA2.grid(column=0,row=1,columnspan=1,pady=1,sticky="w")
-        frameA3 = ttk.Frame(self.tab2)
-        frameA3.grid(column=0,row=2,columnspan=1,pady=1,sticky="w")
-        frameA4 = ttk.LabelFrame(self.tab2,borderwidth=5,relief="solid",labelanchor="n",text="Analysis Messages")
-        frameA4.grid(column=0,row=2,columnspan=1,pady=1,sticky="wes")
-        frameA5 = ttk.Frame(self.tab2,borderwidth=5,relief="solid")
-        frameA5.grid(column=1,row=0,columnspan=1,rowspan=5,pady=1,sticky="nesw")
+        frameB1 = ttk.LabelFrame(self.tab2,borderwidth=5,relief="solid",labelanchor="nw",text="Load Data")
+        frameB1.grid(column=0,row=0,columnspan=1,pady=1,sticky="nw")
+        frameB2 = ttk.Label(self.tab2)
+        frameB2.grid(column=0,row=1,columnspan=1,pady=1,sticky="w")
+        frameB3 = ttk.LabelFrame(self.tab2,borderwidth=5,relief="solid",labelanchor="nw",text="Uploaded Data")
+        frameB3.grid(column=0,row=2,columnspan=1,pady=1,sticky="w")
+        frameB4 = ttk.LabelFrame(self.tab2,borderwidth=5,relief="solid",labelanchor="n",text="Analysis Messages")
+        frameB4.grid(column=0,row=3,columnspan=1,pady=1,sticky="wes")
+        frameB5 = ttk.Frame(self.tab2,borderwidth=5,relief="solid")
+        frameB5.grid(column=1,row=0,columnspan=1,rowspan=5,pady=1,sticky="nesw")
 
+        # frameB1
+        textB11 = "Select Data"
+        labelB1 = ttk.Label(frameB1, text=textB11)
+        labelB1.grid(column=0, row=0, sticky='w', padx=5, pady=5)
+        #ToolTip(labelB1,basicdata.tooltips[textB11])
+        entryB1 = ttk.Entry(frameB1)
+        entryB1.grid(column=1, row=0, sticky='ew', padx=5, pady=2)
+        self.anaentries[textB11] = entryB1
+        buttonB1_browse = ttk.Button(frameB1, text='Browse', command=lambda e=entryB1, t=textB11: self.browse(e,t))
+        buttonB1_browse.grid(column=2, row=0, padx=5, pady=2)
+        buttonB1_upload = ttk.Button(frameB1, text='Upload', command=lambda: self.addanadata(tree1,frameB5)) 
+        buttonB1_upload.grid(column=3, row=0, sticky='e', padx=5, pady=2)
 
-        # frame A3
-        tree1 = ttk.Treeview(frameA3)
-        tree1.grid()
+        # frameB2
+        frameB21 = ttk.LabelFrame(frameB2,borderwidth=5,relief="solid",labelanchor="nw",text="Analysis Actions")
+        frameB21.grid(column=0,row=0,sticky='w')
+        frameB22 = ttk.LabelFrame(frameB2,borderwidth=5,relief="solid",labelanchor="nw",text="Plot Actions")
+        frameB22.grid(column=1,row=0,sticky='e')
+        # frameB21
+        labelB21 = ttk.Label(frameB21, text="Fit")
+        labelB21.grid(column=0, row=0, sticky='w', padx=5, pady=5)
+        comboB21 = ttk.Combobox(frameB21,state="readonly",values=["Gaussian","Summed Gaussian"],width=17)
+        comboB21.grid(column=1, row=0, sticky='w', padx=2, pady=2)
+        # entryB21 = ttk.Entry(frameB21)
+        # entryB21.grid(column=2, row=0, sticky='ew', padx=5, pady=2)
+        analyze_button = ttk.Button(frameB21, text='Analyze',command=lambda: self.analyzeA())
+        analyze_button.grid(column=3,row=0,sticky='e')
+        # frameB22
+        labelB22 = ttk.Label(frameB22, text="Plot")
+        labelB22.grid(column=0, row=0, sticky='w', padx=5, pady=5)        
+        comboB22 = ttk.Combobox(frameB22,state="readonly",values=basicdata.plots,width=5)
+        comboB22.grid(column=1, row=0, sticky='w', padx=2, pady=2)
+        plot_button = ttk.Button(frameB22, text='Plot/Unplot', command=lambda: self.plotA(tree1,textB4,comboB22))
+        plot_button.grid(column=2, row=0, sticky='w', padx=2, pady=2)
+
+        # frameB3
+        sA3 = tk.Scrollbar(frameB3)
+        sA3.pack(side=tk.RIGHT,fill=tk.Y)
+        tree1 = ttk.Treeview(frameB3, height=4, yscrollcommand=sA3.set,selectmode='browse')
+        tree1.bind("<1>",lambda event: self.treedefocus(tree1,event))
         tree1columns = ('module','dir','type','plot1','plot2','plot3')
         tree1['columns'] = tree1columns
         for item in tree1columns: 
-            tree1.column(item, width=50, anchor='w',stretch=0)
-        tree1.column('#0', width=100, anchor='w',stretch=0)
+            tree1.column(item, width=55, anchor='center',stretch=0)
+        tree1.column('#0', width=95, anchor='w',stretch=0)
         tree1.heading('module',text="Module")
         tree1.heading('dir',text="Direction")
         tree1.heading('type',text="Type")
         tree1.heading('plot1',text="Plot1")
         tree1.heading('plot2',text="Plot2")
         tree1.heading('plot3',text="Plot3")
-        tree1.insert('', 'end', 1, text='Widgets',values=("D03","X")) # every upload is its own parent ''
+        tree1.pack(side=tk.LEFT,fill=tk.Y)
 
-        tree1.insert('', 'end', 2, text='Applications')
-
-        tree1.set(1,'dir',"X")       
-        # tree.column('size', width=50, anchor='center')
-
-        # frame A4
-        sA1 = tk.Scrollbar(frameA4)
+        # frame B4
+        sA1 = tk.Scrollbar(frameB4)
         sA1.pack(side=tk.RIGHT,fill=tk.Y)
-        textA51 = tk.Text(frameA4,height = 4,width=56,state="disabled",yscrollcommand=sA1.set,wrap=tk.WORD)
-        textA51.pack(side=tk.LEFT,fill=tk.Y)
-        self.entries["MessagesA"] = textA51
-
+        textB4 = tk.Text(frameB4,height = 4,width=56,state="disabled",yscrollcommand=sA1.set,wrap=tk.WORD)
+        textB4.pack(side=tk.LEFT,fill=tk.Y)
+        self.anaentries["MessagesA"] = textB4
 
     def create_widgets_in_tab3(self):
-        frameh11 = ttk.LabelFrame(self.tab3,borderwidth=5,relief="solid",labelanchor="nw",text="General Help")
-        frameh11.grid(column=0,row=0,columnspan=1,pady=1,sticky="nw")
-        frameh21 = ttk.LabelFrame(self.tab3,borderwidth=5,relief="solid",labelanchor='nw',text="Setup Parameters Help")
-        frameh21.grid(column=1,row=0,columnspan=1,rowspan=2,pady=1,sticky="ne")
-        frameh12 = ttk.LabelFrame(self.tab3,borderwidth=5,relief="solid",labelanchor="nw",text="Stewardship")
-        frameh12.grid(column=0,row=1,pady=1,sticky='w')
+        # create subframes in tab3
+        frameh00 = ttk.LabelFrame(self.tab3,borderwidth=5,relief="solid",labelanchor="nw",text="General Help")
+        frameh00.grid(column=0,row=0,columnspan=1,pady=1,sticky="nw")
+        frameh01 = ttk.LabelFrame(self.tab3,borderwidth=5,relief="solid",labelanchor="nw",text="Stewardship")
+        frameh01.grid(column=0,row=1,pady=1,sticky='w')
+        frameh10 = ttk.LabelFrame(self.tab3,borderwidth=5,relief="solid",labelanchor='nw',text="Setup Parameters Help")
+        frameh10.grid(column=1,row=0,columnspan=1,rowspan=2,pady=1,sticky="ne")
 
-        sh1 = tk.Scrollbar(frameh11)
+        # frameh00
+        sh1 = tk.Scrollbar(frameh00)
         sh1.pack(side=tk.RIGHT,fill=tk.Y)
-        texth1 = tk.Text(frameh11,height=4,state="disabled",yscrollcommand=sh1.set,wrap=tk.WORD)
+        texth1 = tk.Text(frameh00,height=4,state="disabled",yscrollcommand=sh1.set,wrap=tk.WORD)
         texth1.pack(side=tk.LEFT,fill=tk.Y)
         self.entries["Help1"] = texth1
         self.messageprint(basicdata.helpstrings[1],texth1)
         sh1.config(command=texth1.yview)
 
-        sh3 = tk.Scrollbar(frameh12)
-        sh3.pack(side=tk.RIGHT,fill=tk.Y)
-        texth3 = tk.Text(frameh12,height=4,state="disabled",yscrollcommand=sh3.set,wrap=tk.WORD)
-        texth3.pack(side=tk.LEFT,fill=tk.Y)
-        self.entries["Help3"] = texth3
-        self.messageprint(basicdata.helpstrings[3],texth3)
-        sh3.config(command=texth3.yview)
-
-        sh2 = tk.Scrollbar(frameh21)
+        # frameh10
+        sh2 = tk.Scrollbar(frameh10)
         sh2.pack(side=tk.RIGHT,fill=tk.Y)
-        texth2 = tk.Text(frameh21,height=10,state="disabled",yscrollcommand=sh2.set,wrap=tk.WORD)
+        texth2 = tk.Text(frameh10,height=10,state="disabled",yscrollcommand=sh2.set,wrap=tk.WORD)
         texth2.pack(side=tk.LEFT,fill=tk.Y)
         self.entries["Help2"] = texth2
         self.messageprint(basicdata.helpstrings[2],texth2)
         sh2.config(command=texth2.yview)
 
-##### COMMANDS:
+        # frameh01
+        sh3 = tk.Scrollbar(frameh01)
+        sh3.pack(side=tk.RIGHT,fill=tk.Y)
+        texth3 = tk.Text(frameh01,height=4,state="disabled",yscrollcommand=sh3.set,wrap=tk.WORD)
+        texth3.pack(side=tk.LEFT,fill=tk.Y)
+        self.entries["Help3"] = texth3
+        self.messageprint(basicdata.helpstrings[3],texth3)
+        sh3.config(command=texth3.yview)
+
+# commands:
+    def addanadata(self,tree,frameB5): 
+        dirpath = self.anaentries["Select Data"].get().strip() 
+        if dirpath == "": 
+            self.messageprint("Please add the path to a folder before pressing upload.\n")
+            return
+        else: 
+            # upload all the data into treedata
+            if not self.treedata: entrynumber = 1
+            else: entrynumber = max(self.treedata.keys())+1
+            self.treedata[entrynumber] = {"path": dirpath}
+            for file in os.listdir(dirpath): 
+                filepath = os.path.join(dirpath,file)
+                if file[-13:] == "Metadata.json": 
+                    with open(filepath) as json_file: 
+                        self.treedata[entrynumber]["metadata"] = json.load(json_file)
+                elif file[-12:] == "ProcData.csv": 
+                    self.treedata[entrynumber]["procdata"] = basicfuncs.csvtodict(filepath)
+                elif file[-13:] == "FitStats.json": 
+                    if "fitstats" not in self.treedata[entrynumber]: 
+                        self.treedata[entrynumber]['fitstats'] = {}
+                    with open(filepath) as json_file:
+                        self.treedata[entrynumber]["fitstats"][file[-23]] = json.load(json_file)
+            # start populating the tree
+            self.treedata[entrynumber]["entries"] = {}
+            datasets = [x for x in list(self.treedata[entrynumber]["procdata"].keys()) if x[-2]=="P"]
+            module = datasets[0][2:5]
+            # add raw data
+            for i,poskey in enumerate(datasets): 
+                value = (module,poskey[-1],"Raw")
+                if i == 0: 
+                    tree.insert('','end',entrynumber,text=self.treedata[entrynumber]["metadata"]["Timestamp"],values=value)
+                    self.treedata[entrynumber]["entries"][entrynumber] = {
+                        "X": self.treedata[entrynumber]["procdata"][poskey], 
+                        "Y" :self.treedata[entrynumber]["procdata"][basicdata.sdict[module][i]], 
+                        "labels": [poskey,basicdata.pdict[module][i]],
+                        "plotted": False
+                        }
+                else: 
+                    tempnum = round(list(self.treedata[entrynumber]["entries"].keys())[-1]+0.1,1)
+                    tree.insert(entrynumber,'end',tempnum,values=value)
+                    self.treedata[entrynumber]["entries"][tempnum] = {
+                        "X": self.treedata[entrynumber]["procdata"][poskey], 
+                        "Y": self.treedata[entrynumber]["procdata"][basicdata.sdict[module][i]], 
+                        "labels": [poskey,basicdata.pdict[module][i]],
+                        "plotted": False
+                    }
+                
+            # add fit data
+            if "fitstats" in self.treedata[entrynumber]:
+                for key in list(self.treedata[entrynumber]["fitstats"].keys()): 
+                    tempnum = round(list(self.treedata[entrynumber]["entries"].keys())[-1]+0.1,1)
+                    tree.insert(entrynumber,'end',tempnum,values=(module,key,"Fit"))
+                    self.treedata[entrynumber]["entries"][tempnum] = {
+                        "X": np.linspace(-50,-45,600), # figure out how to select these bounds dynamically? 
+                        "Y": self.datanalysis.generatefitline(np.linspace(-50,-45,600),self.treedata[entrynumber]["fitstats"][key],"gauss"),
+                        "labels": ["Position",key+" Fit"],
+                        "plotted": False
+                    }
+
+            if entrynumber == 1: 
+                self.plotinit(0,frameB5)
+                # autopopulate the plots with the first data
+
+    def plotA(self,tree,textB4,comboB22): 
+        """Plot or unplot a dataset on a specific plot.""" 
+        #{"Frame":{},"Canvas":{},"Fig":{},"Ax":{},"ScatterObj":{}} each dict keys are basicdata.plots 
+        if not tree.selection(): 
+            self.messageprint("Please select a dataset in the Uploaded Data table before executing an action.",textB4)
+            return
+        else: 
+            item = basicfuncs.strtonum(tree.selection()[0])
+        if comboB22.get().strip() == "": 
+            self.messageprint("Please select a plot to apply the action to.",textB4)
+            return
+        else: 
+            plot = comboB22.get().strip()
+
+        if self.treedata[math.floor(item)]["entries"][item]["plotted"] == False: 
+            if tree.item(item)['values'][2] == "Raw": 
+                self.treedata[math.floor(item)]["entries"][item]["plotted"] = self.plotobjects2["Ax"][plot].scatter(self.treedata[math.floor(item)]["entries"][item]["X"],self.treedata[math.floor(item)]["entries"][item]["Y"])
+            elif tree.item(item)['values'][2] == "Fit": 
+                self.treedata[math.floor(item)]["entries"][item]["plotted"] = self.plotobjects2["Ax"][plot].plot(self.treedata[math.floor(item)]["entries"][item]["X"],self.treedata[math.floor(item)]["entries"][item]["Y"])
+            tree.set(item,plot.lower(),u'\u2713')
+        else: 
+            self.treedata[math.floor(item)]["entries"][item]["plotted"].remove()
+            self.treedata[math.floor(item)]["entries"][item]["plotted"] = False
+            tree.set(item,plot.lower(),"")
+        self.plotobjects2["Canvas"][plot].draw()
+
+        # add legend info
+        # things disappear when window resized interestingly....
+
+    def analyze(self): 
+        print("analyzing")
+
     def testcalc(self): # to delete later, a temporary test button mapping
         print(self.acsyscontrol.get_list_of_threads())
         # # self.addparampopup()
         # print("--"+self.entries['Out Limit'].get().strip()+"--")
         print("yippee") 
 
+    def treedefocus(self,tree,event):
+        selection = tree.selection()
+        item = tree.identify_row(event.y)
+        if item in selection:
+            tree.selection_remove(item)
+            return "break"     
+
     def change_focus(self,event):
-        """Removes focus from previous focus when clicked elsewhere. #TODO buggy on the combobox deselect."""
+        """Removes focus from previous focus when clicked elsewhere."""
         try: event.widget.focus_set()
         except: pass # TODO FIX THIS!!! it bugs out at the combobox...
 
@@ -255,20 +387,26 @@ class WireScanApp(tk.Tk):
         self.AdvChild.grab_set() # keep focus on advanced param window
 
     def browse(self, entry_widget, text):
+        """Browse for a file."""
         if text == 'Setup Parameters':
             filename = filedialog.askopenfilename(filetypes=[("JSON files", "*.json")])
             if filename:
                 entry_widget.delete(0, tk.END)
                 entry_widget.insert(0, filename)
                 self.workdir = os.path.dirname(filename)
-            
         elif text == 'Save Directory':
             directory = filedialog.askdirectory()
             if directory:
                 entry_widget.delete(0, tk.END)
                 entry_widget.insert(0, directory)
+        elif text == "Select Data": 
+            directories = filedialog.askdirectory() # need tkfilebrowser installed to be able to select multiple directories.
+            if directories:
+                entry_widget.delete(0, tk.END)
+                entry_widget.insert(0, directories)
 
     def changelims(self, keywidget, value):
+        """Automatically change the in/out limits based on selection of wire."""
         widget1 = self.entries[keywidget]
         widget1.delete(0, tk.END)
         if keywidget == "Out Limit": 
@@ -277,117 +415,134 @@ class WireScanApp(tk.Tk):
             widget1.insert(tk.END, basicdata.inlimdict[value])
 
     def messageprint(self,message,*widgets): 
-        """Prints message to any supplied Text widget."""
+        """Prints message to any supplied Text widget or defaults to main Message Box."""
         widget = self.entries["Messages"]
-        for ar in widgets: 
+        for ar in widgets: # unpacks to get the widget
             widget = ar
         widget.config(state="normal")
         widget.insert(tk.END,message)
         widget.config(state="disabled")
         widget.see(tk.END)
 
-    def selectedwire(self,frame122,frame21): 
+    def selectedwire(self,frame011,frame10): 
+        """Initiates all changes upon selecting a wire: changing limits, initiates live readbacks, initializes plot setup."""
         value = self.entries["Wire"].get().strip() # could have used event.widget.get() if we passed event through lambda
         self.changelims("Out Limit",value)
         self.changelims("In Limit",value)
-        self.readbackpopup(value,frame122) #technically could get value in these, but it is easier to just pass it?
-        self.plotinit(value,frame21)
+        self.readbackpopup(value,frame011) #technically could get value in these, but it is easier to just pass it?
+        self.plotinit(value,frame10)
 
-    def plotinit(self,value,frame21): 
+    def plotinit(self,value,frame10): 
         '''Initializing axes of the live plot upon wire selection & deleting previous subplots.'''
         # deleting existing frames, canvas, figs        
-        for widgets in frame21.winfo_children(): # delete eveyrthing in frame
+        for widgets in frame10.winfo_children(): # delete eveyrthing in frame
             widgets.destroy()
         # resetting the dictionary of stuff
-        self.plotobjects = {"Frame":{},"Canvas":{},"Fig":{},"Ax":{},"ScatterObj":{}}
-
+        plotobj = {"Frame":{},"Canvas":{},"Fig":{},"Ax":{},"ScatterObj":{}}
+        # building and saving all needed objects in plotobjects
         j = 0
-        for i,key in enumerate(basicdata.pdict[value]): 
-            self.plotobjects["Frame"][key] = ttk.Frame(frame21)
-            self.plotobjects["Frame"][key].grid(column=0,row=j,columnspan=1,pady=1,sticky="we")
-            frame21.rowconfigure(j,weight=1)
+        if value == 0: g = basicdata.plots
+        else: g = basicdata.pdict[value]
+
+        for i,key in enumerate(g): 
+            plotobj["Frame"][key] = ttk.Frame(frame10)
+            plotobj["Frame"][key].grid(column=0,row=j,columnspan=1,pady=1,sticky="we")
+            frame10.rowconfigure(j,weight=1)
             j = j+1
-            self.plotobjects["Fig"][key] = Figure(dpi=100)
-            self.plotobjects["Canvas"][key] = FigureCanvasTkAgg(self.plotobjects["Fig"][key], master=self.plotobjects["Frame"][key])
-            self.plotobjects["Canvas"][key].draw()
-            self.plotobjects["Canvas"][key].get_tk_widget().pack(expand=1,fill="both")
-            self.plotobjects["Ax"][key] = self.plotobjects["Fig"][key].add_subplot(111)
-            self.plotobjects["Ax"][key].set_xlabel(key,fontsize=9)
-            self.plotobjects["Ax"][key].set_ylabel(basicdata.sdict[value][i],fontsize=9)
-            self.plotobjects["Ax"][key].tick_params(axis='x',labelsize=8)
-            self.plotobjects["Ax"][key].tick_params(axis='y',labelsize=8)
-            self.plotobjects["ScatterObj"][key] = self.plotobjects["Ax"][key].scatter([],[],color="tab:blue")
-            self.plotobjects["Canvas"][key].draw()          
-            self.plotobjects["Fig"][key].set_tight_layout(True) 
-        frame21.columnconfigure(0,weight=1)
-        #TODO consider adding navigation toolbar...fix plot...something
+            plotobj["Fig"][key] = Figure(dpi=100)
+            plotobj["Canvas"][key] = FigureCanvasTkAgg(plotobj["Fig"][key], master=plotobj["Frame"][key])
+            plotobj["Canvas"][key].draw()
+            plotobj["Canvas"][key].get_tk_widget().pack(expand=1,fill="both")
+            plotobj["Ax"][key] = plotobj["Fig"][key].add_subplot(111)
+            if value == 0: 
+                plotobj["Ax"][key].set_xlabel("Position (mm)",fontsize=9)
+                plotobj["Ax"][key].set_ylabel("Intensity (V)",fontsize=9)
+            else: 
+                plotobj["Ax"][key].set_xlabel(key,fontsize=9)
+                plotobj["Ax"][key].set_ylabel(basicdata.sdict[value][i],fontsize=9)
+            plotobj["Ax"][key].tick_params(axis='x',labelsize=8)
+            plotobj["Ax"][key].tick_params(axis='y',labelsize=8)
+            plotobj["ScatterObj"][key] = plotobj["Ax"][key].scatter([],[],color="tab:blue")
+            plotobj["Canvas"][key].draw()          
+            plotobj["Fig"][key].set_tight_layout(True) 
+        frame10.columnconfigure(0,weight=1)
+        if value == 0: 
+            self.plotobjects2 = plotobj
+        else: 
+            self.plotobjects1 = plotobj
 
-    def readbackpopup(self,value,frame122):
+    def readbackpopup(self,value,frame011):
         """Populate a frame with wire position and signal readbacks everytime a wire is selected."""
-        for widgets in frame122.winfo_children(): # delete eveyrthing in frame
+        # delete everything in frame
+        for widgets in frame011.winfo_children(): 
             widgets.destroy()
-
+        # access the last readbacks keys and deletes them from being read anymore.
+        # readbackpopup() and additionalparampopup() share the same dictionary & thread for reading parameters, which is why
+        # we have to be specific about which keys are deleted.
         for key in self.pastreadbacks[1]: 
             if key in list(self.readbacks.keys()): 
                 del self.readbacks[key]
-
+        # create and print readbacks. StringVar to let it be changeable
         pos, sig = basicdata.pdict[value], basicdata.sdict[value]
         for i, text in enumerate(pos):
-            label = ttk.Label(frame122, text=text+":")
+            label = ttk.Label(frame011, text=text+":")
             label.grid(column=0, row=i, sticky='n', padx=0, pady=2)
             self.readbacks[text] = tk.StringVar()
             self.pastreadbacks[1].append(text)
-            label1 = ttk.Label(frame122, textvariable=self.readbacks[text]) # these should be "6.23 mm" etc
+            label1 = ttk.Label(frame011, textvariable=self.readbacks[text]) 
             label1.grid(column=1, row=i, sticky='n', padx=0, pady=2)
-            label2 = ttk.Label(frame122, text=" mm")
+            label2 = ttk.Label(frame011, text=" mm")
             label2.grid(column=2, row=i, sticky='n', padx=2, pady=2)
         for i, text in enumerate(sig):
-            label = ttk.Label(frame122, text=text+":")
+            label = ttk.Label(frame011, text=text+":")
             label.grid(column=3, row=i, sticky='n', padx=2, pady=2)
             self.readbacks[text] = tk.StringVar()
             self.pastreadbacks[1].append(text)
-            label1 = ttk.Label(frame122, textvariable=self.readbacks[text]) 
+            label1 = ttk.Label(frame011, textvariable=self.readbacks[text]) 
             label1.grid(column=4, row=i, sticky='n', padx=0, pady=2)
-            label2 = ttk.Label(frame122, text=" V")
+            label2 = ttk.Label(frame011, text=" V")
             label2.grid(column=5, row=i, sticky='n', padx=0, pady=2)
-        
+        # start the thread to fetch and plot readbacks
         self.start_readback_thread()
 
-    def addparampopup(self,frame14,paramstrlist): 
-        for widgets in frame14.winfo_children(): # delete eveyrthing in frame
+    def addparampopup(self,frame03,paramstrlist): 
+        """Populate a frame with additional parameters everytime a scan is started."""
+        # delete everything in frame
+        for widgets in frame03.winfo_children(): 
             widgets.destroy()
+        # change GUI window size based on how many parameters we're adding
         if paramstrlist == []: 
             self.minsize(850,365)
-            frame14.grid_remove()
+            frame03.grid_remove()
         elif len(paramstrlist) < 5: 
-            self.minsize(850,410) # GUI adjustment for new section
-            frame14.grid()
+            self.minsize(850,410) 
+            frame03.grid()
         else: 
-            self.minsize(850,430) # GUI adjustment for new section
-            frame14.grid()
-
-        for key in self.pastreadbacks[2]: # clear the parameters that were being fetched last time the program had this popup
+            self.minsize(850,430) 
+            frame03.grid()
+        # clear the parameters that were being fetched last time the program had this popup
+        for key in self.pastreadbacks[2]: 
             if key in list(self.readbacks.keys()): 
                 del self.readbacks[key]
-
+        # print the parameters needed
         for i, text in enumerate(paramstrlist):
             if i == 8: 
                 break
             j = i%4 * 3
             k = math.floor(i/4) 
-            label = ttk.Label(frame14, text=text+":")
+            label = ttk.Label(frame03, text=text+":")
             label.grid(column=j, row=k, sticky='n', padx=0, pady=2)
             self.readbacks[text] = tk.StringVar()
             self.pastreadbacks[2].append(text)
-            label1 = ttk.Label(frame14, textvariable=self.readbacks[text]) # these should be "6.23" etc
+            label1 = ttk.Label(frame03, textvariable=self.readbacks[text]) 
             label1.grid(column=j+1, row=k, sticky='n', padx=2, pady=2)
             # label2 = ttk.Label(frame14, text=" mm") #TODO find way to fetch units
             # label2.grid(column=j+2, row=k, sticky='n', padx=2, pady=2)
-
+        # start the readbacks thread
         self.start_readback_thread()
 
     def start_readback_thread(self): 
-        """Start the readback thread and clear it if already existent."""
+        """Start the readback thread and clear it if already existent. Shares fetching for readbackpopup and addparampopup."""
         self.readback_thread = "allreadbacks"
         if self.readback_thread in self.acsyscontrol.get_list_of_threads(): # kill existing thread if present
             self.acsyscontrol.end_any_thread(self.readback_thread)
@@ -500,12 +655,12 @@ class WireScanApp(tk.Tk):
             outdict[key] = tval
         return outdict
 
-    def loadsetp(self,frame122,frame21): # need to get frame out of this & have it accessible globally? 
+    def loadsetp(self,frame011,frame10): 
         """Function for the Upload button. 
         Executes necessary actions to upload data from a JSON to the program & GUI. 
         Confirms entries are appropriate.
         """
-        filepath = self.entries['Setup Parameters'].get().strip()
+        filepath = self.entries['Setup Parameters'].get().strip() # getting the data from the uploaded file.
         if filepath == "": 
             self.messageprint("Please add the path to a Setup Parameters file before pressing upload.\n")
             return
@@ -516,11 +671,12 @@ class WireScanApp(tk.Tk):
             except: 
                 self.messageprint("This file is not valid. Please try again.\n")
                 return
-
+            # start parsing the data
             for ignorekey in basicdata.ignorekeys: # skipping the additional keys in Setup Params
                 if ignorekey in list(tempinput.keys()): 
                     del tempinput[ignorekey]
             cinkeys = list(tempinput.keys())
+            # execute all of the checks
             for key in cinkeys: 
                 if key not in self.entries.keys(): # check that there are no unwanted additions to JSON
                     self.messageprint("There is an unrecognized key in the JSON file.\n")
@@ -547,11 +703,11 @@ class WireScanApp(tk.Tk):
                         elif (key == "WS Mode"): 
                             self.entries[key].set("constant")
                             self.messageprint(key+" has been restored to default.\n")
-
+            # initate the actions that happen after Wire is selected
             wire = self.entries["Wire"].get().strip()
             if wire in list(basicdata.pdict.keys()): # if a wire was selected with the json input
-                self.readbackpopup(wire,frame122)
-                self.plotinit(wire,frame21)
+                self.readbackpopup(wire,frame011)
+                self.plotinit(wire,frame10)
                 if "Out Limit" not in cinkeys: 
                     self.changelims("Out Limit",wire)
                 if "In Limit" not in cinkeys: 
@@ -566,7 +722,9 @@ class WireScanApp(tk.Tk):
             self.buttons[button].config(state=statestr)
 
     def startbutton(self,frame14): 
-        self.lockentries("disabled",basicdata.lockedentries,basicdata.lockedbuttons) # locking to modification
+        """Execute the setup needed for a scan and start the scan."""
+        # locking to modification
+        self.lockentries("disabled",basicdata.lockedentries,basicdata.lockedbuttons) 
         self.scan_thread = "mainscan"
         # check thread isn't open+unset or open+set+incomplete
         if self.scan_thread in self.acsyscontrol.get_list_of_threads(): # if thread exists and is unset
@@ -635,7 +793,7 @@ class WireScanApp(tk.Tk):
         if len(params) == 5: 
             self.metad["Pulse Length"] = m[3]-m[2]
             self.metad["Frequency"] = m[4]
-        basicfuncs.dicttojson(self.metad,os.path.join(self.setpout["WS Directory"],"_".join([str(self.setpout["Timestamp"]),self.setpout["Wire"],",Metadata.json"])))
+        basicfuncs.dicttojson(self.metad,os.path.join(self.setpout["WS Directory"],"_".join([str(self.setpout["Timestamp"]),self.setpout["Wire"],"Metadata.json"])))
         
         # start wirescan 
         self.plot_thread = "liveplot" 
@@ -645,9 +803,10 @@ class WireScanApp(tk.Tk):
         if self.plot_thread in self.acsyscontrol.get_list_of_threads(): 
             self.acsyscontrol.end_any_thread(self.plot_thread)
         print("Starting liveplot")
-        self.acsyscontrol.start_liveplot_thread(self.plot_thread,self.scan_thread,self.setpout["Wire"],self.plotobjects)
+        self.acsyscontrol.start_liveplot_thread(self.plot_thread,self.scan_thread,self.setpout["Wire"],self.plotobjects1)
 
     def abortbutton(self): 
+        """Abort an ongoing scan."""
         try: 
             if self.scan_thread in self.acsyscontrol.get_list_of_threads(): # kill existing thread if present
                 self.acsyscontrol.end_any_thread(self.scan_thread)
@@ -659,6 +818,7 @@ class WireScanApp(tk.Tk):
             self.messageprint("No scan to abort.\n") 
 
     def wiresout(self):
+        """Issue setting to move wire to the out position."""
         if self.entries["Wire"].get().strip() in basicdata.pdict.keys():
             self.acsyscontrol.setparam(basicdata.pdict[self.entries["Wire"].get().strip()][0],-12700)
             self.messageprint("Out setting issued to "+basicdata.pdict[self.entries["Wire"].get().strip()][0]+".\n")
@@ -670,7 +830,6 @@ class Adv_Window(tk.Toplevel):
         tk.Toplevel.__init__(self,master)
         self.title("Advanced Settings")
         self.protocol('WM_DELETE_WINDOW', self.done_adv)
-
         self.create_widgets_in_advwindow(master) 
 
     def create_widgets_in_advwindow(self,master):
@@ -684,35 +843,37 @@ class Adv_Window(tk.Toplevel):
             label = ttk.Label(frameA, text=text)
             label.grid(column=0, row=i, sticky='w', padx=5, pady=5)
             ToolTip(label,basicdata.tooltips[text])
+        entryA0 = ttk.Entry(frameA)
+        master.entries[textA[0]] = entryA0
+        entryA0.grid(column=1, row=0, sticky='e', padx=5, pady=2)
         entryA1 = ttk.Entry(frameA)
-        master.entries[textA[0]] = entryA1
-        entryA1.grid(column=1, row=0, sticky='e', padx=5, pady=2)
+        master.entries[textA[1]] = entryA1
+        entryA1.insert(0,"12700")
+        entryA1.grid(column=1, row=1, sticky='e', padx=5, pady=2)
         entryA2 = ttk.Entry(frameA)
-        master.entries[textA[1]] = entryA2
-        entryA2.insert(0,"12700")
-        entryA2.grid(column=1, row=1, sticky='e', padx=5, pady=2)
-        entryA3 = ttk.Entry(frameA)
-        master.entries[textA[2]] = entryA3
-        entryA3.grid(column=1, row=2, sticky='e', padx=5, pady=2)
-        comboA4 = ttk.Combobox(frameA,state="readonly",values=basicdata.wsmodes,width=17)
-        master.entries[textA[3]] = comboA4
-        comboA4.set("constant")
-        comboA4.grid(column=1, row=3, sticky='s', padx=2, pady=2)
+        master.entries[textA[2]] = entryA2
+        entryA2.grid(column=1, row=2, sticky='e', padx=5, pady=2)
+        comboA3 = ttk.Combobox(frameA,state="readonly",values=basicdata.wsmodes,width=17)
+        master.entries[textA[3]] = comboA3
+        comboA3.set("constant")
+        comboA3.grid(column=1, row=3, sticky='s', padx=2, pady=2)
+        entryA4 = ttk.Entry(frameA)
+        master.entries[textA[4]] = entryA4
+        entryA4.grid(column=1, row=4, sticky='e', padx=5, pady=2)
         entryA5 = ttk.Entry(frameA)
-        master.entries[textA[4]] = entryA5
-        entryA5.grid(column=1, row=4, sticky='e', padx=5, pady=2)
+        master.entries[textA[5]] = entryA5
+        entryA5.grid(column=1, row=5, sticky='e', padx=5, pady=2)
         entryA6 = ttk.Entry(frameA)
-        master.entries[textA[5]] = entryA6
-        entryA6.grid(column=1, row=5, sticky='e', padx=5, pady=2)
-        entryA7 = ttk.Entry(frameA)
-        master.entries[textA[6]] = entryA7
-        entryA7.grid(column=1, row=6, sticky='e', padx=5, pady=2)
+        master.entries[textA[6]] = entryA6
+        entryA6.grid(column=1, row=6, sticky='e', padx=5, pady=2)
 
     def done_adv(self): 
+        """Actions when window is complete."""
         self.grab_release() # release focus before withdrawing
         self.withdraw()
 
 class ToolTip(): 
+    """Show small description popups when hovering over specific labels."""
     # this entire class is from https://stackoverflow.com/questions/3221956/how-do-i-display-tooltips-in-tkinter
     def __init__(self, widget, text='widget info'): 
         self.waittime = 500
@@ -761,7 +922,6 @@ class ToolTip():
         self.tw= None
         if tw:
             tw.destroy()
-
 
 if __name__ == "__main__":
     app = WireScanApp()

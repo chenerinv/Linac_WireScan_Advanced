@@ -78,6 +78,8 @@ events = ["0A","0C","17","00"]
 
 wsmodes = ["constant","steps"]
 
+plots = ["Plot1","Plot2","Plot3"]
+
 checkcorrect = {
     "Wire": str,
     "Out Limit": float,
