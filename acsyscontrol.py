@@ -1,13 +1,14 @@
 import threading
 import acsys.dpm
 import os
+import datetime
 import basicdata
 import basicfuncs
+import matplotlib.animation as animation
 import time
 from dataanalysis import dataanalysis
 
 async def updatereadback_1H(con,threadcontext,strvardict):
-    """Retrieve data for live readbacks."""
     # setup context
     async with acsys.dpm.DPMContext(con,dpm_node="DPM03") as dpm:
         # add acquisition requests
@@ -27,10 +28,10 @@ async def updatereadback_1H(con,threadcontext,strvardict):
                 # logic to assign 
                 strvardict[tagdict[evt_res.tag]].set(round(evt_res.data,2))
             else: 
-                pass  
+                pass 
+            #TODO something about buffer? 
 
 async def runscan(con,threadcontext,maindict): 
-    """Run a scan."""
     # setup context
     async with acsys.dpm.DPMContext(con,dpm_node="DPM03") as dpm:
         # configure setting:
@@ -77,9 +78,9 @@ async def runscan(con,threadcontext,maindict):
                         print("threadstopped in temporary counter!")            
             else: 
                 pass # this is likely a status response
+            #TODO something about buffer? 
 
 async def checkp(con,paramstrs,result,tries):
-    """Check a parameter value."""
     # setup context
     async with acsys.dpm.DPMContext(con,dpm_node="DPM03") as dpm:
         # add acquisition requests
@@ -105,7 +106,6 @@ async def checkp(con,paramstrs,result,tries):
     return result['value']
 
 async def setp(con,paramstr,setting): 
-    """Set a parameter to a value."""
     # setup context
     async with acsys.dpm.DPMContext(con,dpm_node="DPM03") as dpm:
         # check kerberos credentials and enable settings
@@ -116,18 +116,19 @@ async def setp(con,paramstr,setting):
         await dpm.add_entry(0, paramstr+'.SETTING@N')
         await dpm.apply_settings([(0, setting)]) 
 
+
 class acsyscontrol: 
     def __init__(self): 
         self.thread_dict = {}
         self.dataanalysis = dataanalysis()
 
-# starting threads and thread management: 
+##### THREADING CONTROL BITS
+
     def get_list_of_threads(self): 
-        """Returns list of unset threads."""
-        return [key for key in self.thread_dict.keys() if not self.thread_dict[key]['stop'].is_set()] 
+        #print(threading.enumerate())
+        return [key for key in self.thread_dict.keys() if not self.thread_dict[key]['stop'].is_set()] # show open threads
     
     def check_finally(self,thread_dict_key): 
-        """Checks if a thread has finished its finally statement and set the end of the finally."""
         if thread_dict_key in self.thread_dict.keys(): 
             if self.thread_dict[thread_dict_key]['finally'].is_set(): 
                 return True
@@ -137,13 +138,12 @@ class acsyscontrol:
             return True
     
     def end_any_thread(self, thread_name): 
-        """Ending a thread. Joins threads except mainscan."""
         self.thread_dict[thread_name]['stop'].set() 
         if thread_name != "mainscan":
             self.thread_dict[thread_name]['thread'].join() 
+        print("threadended!")
 
     def start_readbacks_thread(self, thread_name, strvardict): 
-        """Start readbacks thread to gather data for readbackpopup and addparampopup"""
         tread = threading.Thread(target=self.readparams,args=(thread_name,strvardict,),daemon=True)
         self.thread_dict[thread_name] = {
             'thread': tread,
@@ -152,7 +152,6 @@ class acsyscontrol:
         tread.start()
 
     def start_scan_thread(self,thread_name,coutput,lockentries,messageprint,plot_thread_name): 
-        """Start mainscan thread."""
         tmscan = threading.Thread(target=self.mainscan,args=(thread_name,coutput,lockentries,messageprint,plot_thread_name,))
         self.thread_dict[thread_name] = {
             'thread': tmscan, 
@@ -164,7 +163,6 @@ class acsyscontrol:
         tmscan.start()
 
     def start_liveplot_thread(self,thread_name,scanthreadname,modstr,plotobjects):
-        """Start liveplot thread."""
         tplot = threading.Thread(target=self.liveplotting,args=(thread_name,scanthreadname,modstr,plotobjects,),daemon=True) 
         self.thread_dict[thread_name] = {
             'thread': tplot,
@@ -172,13 +170,12 @@ class acsyscontrol:
         }
         tplot.start()
 
-# functions to happen inside of threads:
+##### FUNCTIONAL BITS
+
     def setparam(self,paramstr,setting): 
-        """Set a parameter to a provided value."""
         acsys.run_client(setp,paramstr=paramstr,setting=setting)
 
     def checkparam(self,paramstrs,tries): 
-        """Check the value of a parameter or list of parameters."""
         result = {'value': []}
         for j in paramstrs: 
             result['value'].append(False)
@@ -186,14 +183,12 @@ class acsyscontrol:
         return output
          
     def readparams(self,thread_name,strvardict): 
-        """Continuously gather data for readbacks."""
         try: 
             acsys.run_client(updatereadback_1H,threadcontext=self.thread_dict[thread_name],strvardict=strvardict)             
         finally: 
             self.thread_dict[thread_name]['stop'].set()
 
     def mainscan(self,thread_name,coutput,lockentries,messageprint,plot_thread_name): 
-        """Execute mainscan."""
         try: 
             acsys.run_client(runscan,threadcontext=self.thread_dict[thread_name],maindict=coutput)             
         finally: 
@@ -214,7 +209,6 @@ class acsyscontrol:
             messageprint("Scan closed.\n")
 
     def liveplotting(self,thread_name,scanthreadname,modstr,plotobjects): 
-        """Control for updating the plot."""
         try: 
             while self.thread_dict[thread_name]['stop'].is_set() is False: 
                 try: 
@@ -228,8 +222,7 @@ class acsyscontrol:
             self.thread_dict[thread_name]['stop'].set()
     
     def animateplot(self,scanthreadname,modstr,plotobjects): 
-        """Update the plot once."""
-        # plotobjects = {"Frame":{},"Canvas":{},"Fig":{},"Ax":{},"ScatterObj":{}}
+        # plotsdict,scatterobj,canvas ----> plotobjects = {"Frame":{},"Canvas":{},"Fig":{},"Ax":{},"ScatterObj":{}}
         dictcopy = self.thread_dict[scanthreadname]['outdict'].copy() 
         grabd = basicfuncs.rawtowires(dictcopy,modstr)
         for i, poskey in enumerate(basicdata.pdict[modstr]): 
