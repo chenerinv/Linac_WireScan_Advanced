@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit as cf
 import basicdata
@@ -17,6 +18,7 @@ class dataanalysis:
 
     # fit methods
     def gaussfit(self,xparam,yparam,xlist,ylist):
+        """Execute a Gaussian fit from provided data and return statistics."""
         # will save analysis data as a json later
         output = {
             'wirepos': xparam,
@@ -61,11 +63,11 @@ class dataanalysis:
             x = basicdata.pdict[coutput["Wire"]][i]
             y = basicdata.sdict[coutput["Wire"]][i]
             fitstats = self.gaussfit(x,y,procdata[x],procdata[y])
-            #print(fitstats)
             basicfuncs.dicttojson(fitstats,os.path.join(coutput["WS Directory"],"_".join([str(coutput["Timestamp"]),coutput["Wire"],x[-1].upper(),"GaussianFitStats.json"])))
-
+            # make standard plots based on data, save as png.
             if fitstats["error"] == None: 
                 try: 
+                    matplotlib.use('agg')
                     plt.figure()
                     plt.scatter(procdata[x],procdata[y],label="Raw Data")
                     xtemp = np.linspace(min(procdata[x]),max(procdata[x]),1000)
