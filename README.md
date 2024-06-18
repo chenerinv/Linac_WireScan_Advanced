@@ -3,6 +3,13 @@ Program to collect Linac wire scanner data using the fastest motor speed.
 
 ## Bugs & To-Do
 
+- fix plotting bugs: 
+    - add legend info
+    - fix autoscaling
+    - add colors
+    - things disappear when window resized interestingly....  
+    - color order -- if you delete something that was plotted earlier the colors get messed up...      
+
 - fix bug for failing the kerberos authentication....puts up a ValueError. How to get the prompt back?
 
 - add something about noting whether the run concluded naturally or upon an abort -- i think it will have to be executed through the abort button. maybe make a variable like self.status = 1 for abort or something? 

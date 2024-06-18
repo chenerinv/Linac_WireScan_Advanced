@@ -26,7 +26,7 @@ class WireScanApp(tk.Tk):
         self.readbacks = {} # dictionary for live readbacks
         self.pastreadbacks = {1:[], 2:[]} # reference info for killing and restarting a plot
         self.plotobjects1 = {"Frame":{},"Canvas":{},"Fig":{},"Ax":{},"ScatterObj":{}} # matplotlib objects
-        self.plotobjects2 = {"Frame":{},"Canvas":{},"Fig":{},"Ax":{},"ScatterObj":{}} # matplotlib objects
+        self.plotobjects2 = {"Frame":{},"Canvas":{},"Fig":{},"Ax":{},"ScatterObj":{},"Color1": 0,"Color2": 0} # matplotlib objects
         self.acsyscontrol = acsyscontrol()
         self.datanalysis = dataanalysis()
         self.anaentries = {} # for analysis tab
@@ -302,8 +302,10 @@ class WireScanApp(tk.Tk):
                     self.treedata[entrynumber]["entries"][entrynumber] = {
                         "X": self.treedata[entrynumber]["procdata"][poskey], 
                         "Y" :self.treedata[entrynumber]["procdata"][basicdata.sdict[module][i]], 
-                        "labels": [poskey,basicdata.pdict[module][i]],
-                        "plotted": False
+                        "labels": [poskey,basicdata.sdict[module][i]],
+                        "Plot1": False,
+                        "Plot2": False,
+                        "Plot3": False
                         }
                 else: 
                     tempnum = round(list(self.treedata[entrynumber]["entries"].keys())[-1]+0.1,1)
@@ -311,8 +313,10 @@ class WireScanApp(tk.Tk):
                     self.treedata[entrynumber]["entries"][tempnum] = {
                         "X": self.treedata[entrynumber]["procdata"][poskey], 
                         "Y": self.treedata[entrynumber]["procdata"][basicdata.sdict[module][i]], 
-                        "labels": [poskey,basicdata.pdict[module][i]],
-                        "plotted": False
+                        "labels": [poskey,basicdata.sdict[module][i]],
+                        "Plot1": False,
+                        "Plot2": False,
+                        "Plot3": False
                     }
                 
             # add fit data
@@ -324,7 +328,9 @@ class WireScanApp(tk.Tk):
                         "X": np.linspace(-50,-45,600), # figure out how to select these bounds dynamically? 
                         "Y": self.datanalysis.generatefitline(np.linspace(-50,-45,600),self.treedata[entrynumber]["fitstats"][key],"gauss"),
                         "labels": ["Position",key+" Fit"],
-                        "plotted": False
+                        "Plot1": False,
+                        "Plot2": False,
+                        "Plot3": False
                     }
 
             if entrynumber == 1: 
@@ -335,30 +341,55 @@ class WireScanApp(tk.Tk):
         """Plot or unplot a dataset on a specific plot.""" 
         #{"Frame":{},"Canvas":{},"Fig":{},"Ax":{},"ScatterObj":{}} each dict keys are basicdata.plots 
         if not tree.selection(): 
-            self.messageprint("Please select a dataset in the Uploaded Data table before executing an action.",textB4)
+            self.messageprint("Please select a dataset in the Uploaded Data table before executing an action. \n",textB4)
             return
         else: 
             item = basicfuncs.strtonum(tree.selection()[0])
         if comboB22.get().strip() == "": 
-            self.messageprint("Please select a plot to apply the action to.",textB4)
+            self.messageprint("Please select a plot to apply the action to. \n",textB4)
             return
         else: 
             plot = comboB22.get().strip()
 
-        if self.treedata[math.floor(item)]["entries"][item]["plotted"] == False: 
+        if self.treedata[math.floor(item)]["entries"][item][plot] == False: 
             if tree.item(item)['values'][2] == "Raw": 
-                self.treedata[math.floor(item)]["entries"][item]["plotted"] = self.plotobjects2["Ax"][plot].scatter(self.treedata[math.floor(item)]["entries"][item]["X"],self.treedata[math.floor(item)]["entries"][item]["Y"])
+                self.treedata[math.floor(item)]["entries"][item][plot] = self.plotobjects2["Ax"][plot].scatter( 
+                    self.treedata[math.floor(item)]["entries"][item]["X"],
+                    self.treedata[math.floor(item)]["entries"][item]["Y"],
+                    label=self.treedata[math.floor(item)]["entries"][item]["labels"][1]+" vs. "+self.treedata[math.floor(item)]["entries"][item]["labels"][0],
+                    color=basicdata.colorlist1[self.plotobjects2["Color1"]]
+                    )
+                self.plotobjects2["Color1"]+=1
             elif tree.item(item)['values'][2] == "Fit": 
-                self.treedata[math.floor(item)]["entries"][item]["plotted"] = self.plotobjects2["Ax"][plot].plot(self.treedata[math.floor(item)]["entries"][item]["X"],self.treedata[math.floor(item)]["entries"][item]["Y"])
+                self.treedata[math.floor(item)]["entries"][item][plot] = self.plotobjects2["Ax"][plot].plot(
+                    self.treedata[math.floor(item)]["entries"][item]["X"],
+                    self.treedata[math.floor(item)]["entries"][item]["Y"],
+                    basicdata.markerlinelist[self.plotobjects2["Color2"]],
+                    label=self.treedata[math.floor(item)]["entries"][item]["labels"][1],
+                    color=basicdata.colorlist2[self.plotobjects2["Color2"]],
+                    scaley=True #TODO test me?
+                    )
+                self.plotobjects2["Color2"]+=1
+            self.plotobjects2["Ax"][plot].legend()
             tree.set(item,plot.lower(),u'\u2713')
         else: 
-            self.treedata[math.floor(item)]["entries"][item]["plotted"].remove()
-            self.treedata[math.floor(item)]["entries"][item]["plotted"] = False
+            if tree.item(item)['values'][2] == "Raw": 
+                self.treedata[math.floor(item)]["entries"][item][plot].remove()
+                self.plotobjects2["Color1"]-=1
+            elif tree.item(item)['values'][2] == "Fit": 
+                self.treedata[math.floor(item)]["entries"][item][plot][0].remove()
+                self.plotobjects2["Color2"]-=1
+            self.treedata[math.floor(item)]["entries"][item][plot] = False
+            self.plotobjects2["Ax"][plot].legend() # TODO fix the print error
+            #self.plotobjects2["Ax"][plot].autoscale_view()
+            self.plotobjects2["Ax"][plot].relim()
             tree.set(item,plot.lower(),"")
         self.plotobjects2["Canvas"][plot].draw()
 
         # add legend info
-        # things disappear when window resized interestingly....
+        # fix autoscaling
+        # add colors
+        # things disappear when window resized interestingly....        
 
     def analyze(self): 
         print("analyzing")
@@ -467,6 +498,8 @@ class WireScanApp(tk.Tk):
             plotobj["Fig"][key].set_tight_layout(True) 
         frame10.columnconfigure(0,weight=1)
         if value == 0: 
+            plotobj["Color1"]= 0
+            plotobj["Color2"]= 0
             self.plotobjects2 = plotobj
         else: 
             self.plotobjects1 = plotobj
@@ -793,6 +826,7 @@ class WireScanApp(tk.Tk):
         if len(params) == 5: 
             self.metad["Pulse Length"] = m[3]-m[2]
             self.metad["Frequency"] = m[4]
+        self.metad["Abort"] = False
         basicfuncs.dicttojson(self.metad,os.path.join(self.setpout["WS Directory"],"_".join([str(self.setpout["Timestamp"]),self.setpout["Wire"],"Metadata.json"])))
         
         # start wirescan 
@@ -812,6 +846,9 @@ class WireScanApp(tk.Tk):
                 self.acsyscontrol.end_any_thread(self.scan_thread)
                 self.messageprint("Scan aborted by user.\n") 
                 self.wiresout() # think more about this
+                # record that an abort occurred by editing the metadata file
+                self.metad["Abort"] = True
+                basicfuncs.dicttojson(self.metad,os.path.join(self.setpout["WS Directory"],"_".join([str(self.setpout["Timestamp"]),self.setpout["Wire"],"Metadata.json"])))
             else: 
                 self.messageprint("No scan to abort.\n")
         except AttributeError: 
@@ -820,8 +857,11 @@ class WireScanApp(tk.Tk):
     def wiresout(self):
         """Issue setting to move wire to the out position."""
         if self.entries["Wire"].get().strip() in basicdata.pdict.keys():
-            self.acsyscontrol.setparam(basicdata.pdict[self.entries["Wire"].get().strip()][0],-12700)
-            self.messageprint("Out setting issued to "+basicdata.pdict[self.entries["Wire"].get().strip()][0]+".\n")
+            try: 
+                self.acsyscontrol.setparam(basicdata.pdict[self.entries["Wire"].get().strip()][0],-12700)
+                self.messageprint("Out setting issued to "+basicdata.pdict[self.entries["Wire"].get().strip()][0]+".\n")
+            except ValueError:
+                self.messageprint("Invalid Kerberos realm..\n") 
         else: 
             self.messageprint("No wire selected, cannot pull wire out.\n")
         

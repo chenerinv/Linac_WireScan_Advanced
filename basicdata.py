@@ -79,6 +79,9 @@ events = ["0A","0C","17","00"]
 wsmodes = ["constant","steps"]
 
 plots = ["Plot1","Plot2","Plot3"]
+colorlist1 = ['tab:blue','mediumpurple','yellowgreen','tab:cyan','royalblue','plum','darkkhaki','skyblue']
+colorlist2 = ['red','darkorange','gold','hotpink','red','darkorange','gold','hotpink','red','darkorange','gold','hotpink']
+markerlinelist = ['-',':','-.','--','o-','v-','^-','s-','o:','v:','^:','s:']
 
 checkcorrect = {
     "Wire": str,
