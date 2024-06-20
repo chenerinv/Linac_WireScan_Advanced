@@ -5,7 +5,7 @@ Program to collect Linac wire scanner data using the fastest motor speed.
 
 - remove the upload button and have its functionalities be absorbed into the completion of "Browse"
 
-- add example json to help page & fix the look of the help page
+- add example json to help page
 
 - troubleshoot why D81, 83, E1, E3 don't work with acsys...
 - fix that click focus hates combobox -- there's a pass right now to prevent the error
@@ -44,6 +44,7 @@ Program to collect Linac wire scanner data using the fastest motor speed.
 - fix matplotlib open figure in not main thread bug (when trying to make pngs to save)
 - in some previous updated added a functionality to add abort = True etc. into the metadata by updating and rewriting the metadata file if this happens. this is stored in the abortbutton function
 - fix bug for failing the kerberos authentication....puts up a ValueError. caught the value error both in initial validation for run scan and also in the abort. 
+- fixed help page spacing
 
 
 ## Rejected Ideas

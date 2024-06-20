@@ -70,7 +70,7 @@ helpstrings = {
         "are the dropdown lists for Wire, Event, and WS Mode, which are required parameters and if selected in the GUI prior to "
         "upload, will not clear. \n    In the case of an invalid entry, the parameter will clear unless it is Steps or WS Mode, "
         "which will restore to default. \n\n    Configuration inputs are case sensitive."),
-    3: "version 0, updated 3/15/2023 \nContact Erin Chen erinchen@fnal.gov about comments, questions, & concerns.",
+    3: "Version 0, updated 3/15/2023 \nContact Erin Chen erinchen@fnal.gov about comments, questions, & concerns.",
     4: "An example Setup Parameters is shown below: "
 }
 

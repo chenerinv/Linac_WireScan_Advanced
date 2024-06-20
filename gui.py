@@ -162,7 +162,7 @@ class WireScanApp(tk.Tk):
         # frameh00
         sh1 = tk.Scrollbar(frameh00)
         sh1.pack(side=tk.RIGHT,fill=tk.Y)
-        texth1 = tk.Text(frameh00,height=4,state="disabled",yscrollcommand=sh1.set,wrap=tk.WORD)
+        texth1 = tk.Text(frameh00,height=11,state="disabled",yscrollcommand=sh1.set,wrap=tk.WORD,relief="flat")
         texth1.pack(side=tk.LEFT,fill=tk.Y)
         self.entries["Help1"] = texth1
         self.messageprint(basicdata.helpstrings[1],texth1)
@@ -171,7 +171,7 @@ class WireScanApp(tk.Tk):
         # frameh10
         sh2 = tk.Scrollbar(frameh10)
         sh2.pack(side=tk.RIGHT,fill=tk.Y)
-        texth2 = tk.Text(frameh10,height=10,state="disabled",yscrollcommand=sh2.set,wrap=tk.WORD)
+        texth2 = tk.Text(frameh10,height=18,state="disabled",yscrollcommand=sh2.set,wrap=tk.WORD,relief="flat")
         texth2.pack(side=tk.LEFT,fill=tk.Y)
         self.entries["Help2"] = texth2
         self.messageprint(basicdata.helpstrings[2],texth2)
@@ -180,7 +180,7 @@ class WireScanApp(tk.Tk):
         # frameh01
         sh3 = tk.Scrollbar(frameh01)
         sh3.pack(side=tk.RIGHT,fill=tk.Y)
-        texth3 = tk.Text(frameh01,height=4,state="disabled",yscrollcommand=sh3.set,wrap=tk.WORD)
+        texth3 = tk.Text(frameh01,height=4,state="disabled",yscrollcommand=sh3.set,wrap=tk.WORD,relief="flat")
         texth3.pack(side=tk.LEFT,fill=tk.Y)
         self.entries["Help3"] = texth3
         self.messageprint(basicdata.helpstrings[3],texth3)
