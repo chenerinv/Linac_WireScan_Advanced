@@ -711,7 +711,7 @@ class WireScanApp(tk.Tk):
                 self.acsyscontrol.setparam(basicdata.pdict[self.entries["Wire"].get().strip()][0],-12700)
                 self.messageprint("Out setting issued to "+basicdata.pdict[self.entries["Wire"].get().strip()][0]+".\n")
             except ValueError:
-                self.messageprint("Invalid Kerberos realm..\n") 
+                self.messageprint("Invalid Kerberos realm.\n") 
         else: 
             self.messageprint("No wire selected, cannot pull wire out.\n")
         
