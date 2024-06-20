@@ -13,9 +13,53 @@ import basicfuncs
 from acsyscontrol import acsyscontrol 
 from dataanalysis import dataanalysis
 
-class WireScanApp(tk.Tk):
+class QuadScanApp(tk.Tk):
     def __init__(self):
         super().__init__()
+        self.title("Quad Scan App")
+        self.geometry("850x365")
+        self.minsize(850,365)
+
+        # Create the tab control
+        self.tabControl = ttk.Notebook(self)
+
+        # Create Tab1
+        self.tab1 = ttk.Frame(self.tabControl)
+        self.tabControl.add(self.tab1, text='Setup')
+        self.tabControl.pack(expand=1, fill="both")
+        # self.tab1.columnconfigure(0,weight=0,minsize=480)
+        # self.tab1.columnconfigure(1,weight=1)
+        # self.tab1.rowconfigure(4,weight=1)
+
+        # Add widgets to Tab1
+        self.create_qs_widgets()
+        self.bind_all('<Button>', self.change_focus)
+
+        # Create WS Window (hidden until opened)
+        self.WSChild = WireScanApp(self)
+        self.WSChild.withdraw()
+    
+    def create_qs_widgets(self):
+        frame00 = ttk.LabelFrame(self.tab1,borderwidth=5,relief="solid",labelanchor="nw",text="Quick Setup")
+        frame00.grid(column=0,row=0,columnspan=1,pady=1,sticky="nw")
+
+        adv_button = ttk.Button(frame00, text="Open WS App", command=self.open_wsapp)
+        adv_button.grid(column=0, row=0, columnspan=1, padx=1, pady=1)
+
+    def open_wsapp(self):
+        """Open pop-up window with WS App. Steals focus until window is closed."""
+        self.WSChild.deiconify()
+        self.WSChild.grab_set() # keep focus on advanced param window
+
+    def change_focus(self,event):
+        """Removes focus from previous focus when clicked elsewhere."""
+        try: event.widget.focus_set()
+        except: pass # TODO FIX THIS!!! it bugs out at the combobox...
+
+class WireScanApp(tk.Toplevel):
+    def __init__(self,master):
+        tk.Toplevel.__init__(self,master)
+        self.protocol('WM_DELETE_WINDOW', self.done_adv)
         self.title("Constant Speed Wire Scan App")
         self.geometry("850x365")
         self.minsize(850,365)
@@ -715,6 +759,11 @@ class WireScanApp(tk.Tk):
         else: 
             self.messageprint("No wire selected, cannot pull wire out.\n")
         
+    def done_adv(self): 
+        """Actions when window is complete."""
+        self.grab_release() # release focus before withdrawing
+        self.withdraw()
+
 class Adv_Window(tk.Toplevel): 
     def __init__(self,master):
         tk.Toplevel.__init__(self,master)
@@ -814,5 +863,5 @@ class ToolTip():
             tw.destroy()
 
 if __name__ == "__main__":
-    app = WireScanApp()
+    app = QuadScanApp()
     app.mainloop()
