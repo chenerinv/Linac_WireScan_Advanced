@@ -46,11 +46,6 @@ class QuadScanApp(tk.Tk):
         self.WSChild = WireScanApp(self)
         #self.WSChild.grab_release()
         self.WSChild.withdraw()
-
-        # Create WS Window (hidden until opened)
-        self.WS_Window = WS_Window(self)
-        #self.WSChild.grab_release()
-        self.WS_Window.withdraw()
     
     def create_qs_widgets1(self):
         frame00 = ttk.LabelFrame(self.tab1,borderwidth=5,relief="solid",labelanchor="nw",text="Quick Setup")
@@ -93,8 +88,6 @@ class QuadScanApp(tk.Tk):
         entry010_2 = ttk.Entry(frame01,width=8)
         entry010_2.grid(column=3, row=1, sticky='s', padx=2, pady=2)
         self.entries[labels[3]] = entry010_2
-        wsset_button = ttk.Button(frame01, text="WS Settings", command=self.open_wssetwindow)
-        wsset_button.grid(column=0, row=2, columnspan=4, padx=1, pady=1)
 
         # frame02
         text02 = "Save Directory"
@@ -117,14 +110,10 @@ class QuadScanApp(tk.Tk):
         abort_button.grid(column=2, row=1, columnspan=1, padx=1, pady=1)
         self.buttons["Abort"] = abort_button
 
-
-        # test_button = ttk.Button(frame00, text="Open WS App", command=self.open_wsapp)
-        # test_button.grid(column=0, row=0, columnspan=1, padx=1, pady=1)
-
     def create_qs_widgets2(self):
         # create subframes in tab1
         frame01 = ttk.Frame(self.tab2)
-        frame01.grid(column=0,row=0,columnspan=1,pady=1,sticky="w")
+        frame01.grid(column=0,row=0,columnspan=1,pady=1,sticky="nw")
         frame10 = ttk.LabelFrame(self.tab2,borderwidth=5,relief="solid",labelanchor="nw",text="Advanced Parameters")
         frame10.grid(column=1,row=0,columnspan=1,rowspan=3,pady=1,sticky="nesw")
 
@@ -207,74 +196,6 @@ class QuadScanApp(tk.Tk):
         """Open pop-up window with WS Parameters. Steals focus until window is closed."""
         self.AdvChild.deiconify()
         self.AdvChild.grab_set() # keep focus on advanced param window
-
-class WS_Window(tk.Toplevel): 
-    def __init__(self,master):
-        tk.Toplevel.__init__(self,master)
-        self.title("Advanced Settings")
-        self.protocol('WM_DELETE_WINDOW', self.done_adv)
-        self.create_widgets_in_advwindow(master) 
-
-    def create_widgets_in_advwindow(self,master):
-        # setup frame
-        frameA = ttk.LabelFrame(self,borderwidth=5,relief="solid",labelanchor="nw",text="Advanced Settings")
-        frameA.grid(column=0,row=0,columnspan=1,pady=1,sticky="new")
-
-
-        # frame010
-        labels = ["Wire","Out Limit","In Limit", "Event"]
-        for i, text in enumerate(labels):
-            label = ttk.Label(frameA, text=text)
-            label.grid(column=i, row=0, sticky='n', padx=2, pady=2)
-            ToolTip(label,basicdata.tooltips[text])
-        entry010_0 = ttk.Entry(frameA,width=8)
-        entry010_0.grid(column=1, row=1, sticky='s', padx=2, pady=2)
-        master.entries[labels[1]] = entry010_0
-        entry010_1 = ttk.Entry(frameA,width=8)
-        entry010_1.grid(column=2, row=1, sticky='s', padx=2, pady=2)
-        master.entries[labels[2]] = entry010_1
-        combo010_0 = ttk.Combobox(frameA,state="readonly",values=list(basicdata.pdict.keys()),width=4) 
-        combo010_0.grid(column=0, row=1, sticky='s', padx=2, pady=2)
-        combo010_0.bind("<<ComboboxSelected>>", lambda event: self.selectedwire(frame011,frame10))
-        master.entries[labels[0]] = combo010_0
-        combo010_1 = ttk.Combobox(frameA,state="readonly",values=basicdata.events,width=3)
-        combo010_1.grid(column=3, row=1, sticky='s', padx=2, pady=2)
-        master.entries[labels[3]] = combo010_1
-
-        # setup contents
-        textA = ["Additional Parameters","Steps","User Comment","WS Mode","Monitors","Monitor Min","Monitor Max"]
-        for i, text in enumerate(textA):
-            label = ttk.Label(frameA, text=text)
-            label.grid(column=0, row=i+2, sticky='w', padx=5, pady=5)
-            ToolTip(label,basicdata.tooltips[text])
-        entryA0 = ttk.Entry(frameA)
-        master.entries[textA[0]] = entryA0
-        entryA0.grid(column=1, row=2, columnspan=3, sticky='e', padx=5, pady=2)
-        entryA1 = ttk.Entry(frameA)
-        master.entries[textA[1]] = entryA1
-        entryA1.insert(0,"12700")
-        entryA1.grid(column=1, row=3, columnspan=3, sticky='e', padx=5, pady=2)
-        entryA2 = ttk.Entry(frameA)
-        master.entries[textA[2]] = entryA2
-        entryA2.grid(column=1, row=4, columnspan=3, sticky='e', padx=5, pady=2)
-        comboA3 = ttk.Combobox(frameA,state="readonly",values=basicdata.wsmodes,width=17)
-        master.entries[textA[3]] = comboA3
-        comboA3.set("constant")
-        comboA3.grid(column=1, row=5, columnspan=3, sticky='s', padx=2, pady=2)
-        entryA4 = ttk.Entry(frameA)
-        master.entries[textA[4]] = entryA4
-        entryA4.grid(column=1, row=6, columnspan=3, sticky='e', padx=5, pady=2)
-        entryA5 = ttk.Entry(frameA)
-        master.entries[textA[5]] = entryA5
-        entryA5.grid(column=1, row=7, columnspan=3, sticky='e', padx=5, pady=2)
-        entryA6 = ttk.Entry(frameA)
-        master.entries[textA[6]] = entryA6
-        entryA6.grid(column=1, row=8, columnspan=3, sticky='e', padx=5, pady=2)
-
-    def done_adv(self): 
-        """Actions when window is complete."""
-        self.grab_release() # release focus before withdrawing
-        self.withdraw()
 
 class WireScanApp(tk.Toplevel):
     def __init__(self,master):

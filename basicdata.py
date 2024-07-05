@@ -105,6 +105,6 @@ lockedentries = ["Wire","Out Limit","In Limit", "Event", "Steps", "Save Director
 lockedbuttons = ["Browse1","Upload","Browse2","Start"] #,"Wires Out"
 
 
-qlist = ["L:Q01", "L:Q02", "L:Q03", "L:Q04", "L:Q11", "L:Q12", "L:Q13", "L:Q14", "L:Q21", "L:Q22", "L:Q23", "L:Q24", 
+qlist = ["G:AMANDA","L:Q01", "L:Q02", "L:Q03", "L:Q04", "L:Q11", "L:Q12", "L:Q13", "L:Q14", "L:Q21", "L:Q22", "L:Q23", "L:Q24", 
          "L:Q31", "L:Q32", "L:Q33", "L:Q34", "L:Q41", "L:Q42", "L:Q43", "L:Q44", "L:Q51", "L:Q52", "L:Q53", "L:Q54", 
          "L:Q61", "L:Q62", "L:Q63", "L:Q64", "L:Q71", "L:Q72", "L:Q73", "L:Q74"]
