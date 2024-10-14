@@ -35,11 +35,11 @@ async def runscan(con,threadcontext,maindict,messageprint):
     async with acsys.dpm.DPMContext(con,dpm_node="DPM03") as dpm:
         # configure setting:
         # check kerberos credentials and enable settings
-        # try: 
-        #     await dpm.enable_settings(role='linac_wirescan') #TODO UNCOMMENT WHEN ALLOWED TO MOVE WS!!!
-        # except: 
-        #     messageprint("Invalid Kerberos realm.\n")  #TODO change to messageprint
-        #     return
+        try: 
+            await dpm.enable_settings(role='linac_wirescan') #TODO UNCOMMENT WHEN ALLOWED TO MOVE WS!!!
+        except: 
+            messageprint("Invalid Kerberos realm.\n")  #TODO change to messageprint
+            return
         # add acquisition requests
         await dpm.add_entry(-1,'G:AMANDA@p,1H') # this is to let us check set even without an event
         await dpm.add_entry(0, 'L:'+maindict['Wire']+'WPX.SETTING@N')  
@@ -51,7 +51,7 @@ async def runscan(con,threadcontext,maindict,messageprint):
         # issue appropriate setting 
         if maindict["Direction"] == 1: steps = maindict["Steps"]*-1
         elif maindict["Direction"] == 0: steps = maindict["Steps"]
-        # await dpm.apply_settings([(0, steps)]) # set value  #TODO UNCOMMENT WHEN ALLOWED TO MOVE WS!!!
+        await dpm.apply_settings([(0, steps)]) # set value  #TODO UNCOMMENT WHEN ALLOWED TO MOVE WS!!!
         g = 0
 
         # start acquisition
@@ -76,9 +76,9 @@ async def runscan(con,threadcontext,maindict,messageprint):
                     threadcontext['outdict']['stamps'].append(evt_res.stamp.timestamp())
 
                     g=g+1 # TODO COMMENT SECTION WHEN ALLOWED TO MOVE WS
-                    if g > 1000: 
-                        threadcontext['stop'].set()
-                        print("threadstopped in temporary counter!")            
+                    # if g > 1000: 
+                    #     threadcontext['stop'].set()
+                    #     print("threadstopped in temporary counter!")            
             else: 
                 pass # this is likely a status response
 
