@@ -1,25 +1,11 @@
 # Constant Speed Wire Scanner Program
 Program to collect Linac wire scanner data using the fastest motor speed. 
 
-## Bugs & To-Do
+## Bugs & To-Do 
 
-- fix plotting bugs: 
-    - add legend info
-    - fix autoscaling
-    - add colors
-    - things disappear when window resized interestingly....  
-    - color order -- if you delete something that was plotted earlier the colors get messed up...      
-
-- fix bug for failing the kerberos authentication....puts up a ValueError. How to get the prompt back?
-
-- add something about noting whether the run concluded naturally or upon an abort -- i think it will have to be executed through the abort button. maybe make a variable like self.status = 1 for abort or something? 
 - remove the upload button and have its functionalities be absorbed into the completion of "Browse"
 
-- build the analysis page
-    - add something to adjust the axes limits
-    - add delete button
-    - add legend
-- add example json to help page & fix the look of the help page
+- add example json to help page
 
 - troubleshoot why D81, 83, E1, E3 don't work with acsys...
 - fix that click focus hates combobox -- there's a pass right now to prevent the error
@@ -56,7 +42,9 @@ Program to collect Linac wire scanner data using the fastest motor speed.
 - add in default analysis of data and fitting etc. 
 - add nan handler into the analysis -- needed boolean indexing and also conversion into numpy array
 - fix matplotlib open figure in not main thread bug (when trying to make pngs to save)
-
+- in some previous updated added a functionality to add abort = True etc. into the metadata by updating and rewriting the metadata file if this happens. this is stored in the abortbutton function
+- fix bug for failing the kerberos authentication....puts up a ValueError. caught the value error both in initial validation for run scan and also in the abort. 
+- fixed help page spacing
 
 
 ## Rejected Ideas

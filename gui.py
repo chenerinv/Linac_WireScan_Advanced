@@ -26,7 +26,6 @@ class WireScanApp(tk.Tk):
         self.readbacks = {} # dictionary for live readbacks
         self.pastreadbacks = {1:[], 2:[]} # reference info for killing and restarting a plot
         self.plotobjects1 = {"Frame":{},"Canvas":{},"Fig":{},"Ax":{},"ScatterObj":{}} # matplotlib objects
-        self.plotobjects2 = {"Frame":{},"Canvas":{},"Fig":{},"Ax":{},"ScatterObj":{},"Color1": 0,"Color2": 0} # matplotlib objects
         self.acsyscontrol = acsyscontrol()
         self.datanalysis = dataanalysis()
         self.anaentries = {} # for analysis tab
@@ -43,13 +42,6 @@ class WireScanApp(tk.Tk):
         self.tab1.columnconfigure(1,weight=1)
         self.tab1.rowconfigure(4,weight=1)
 
-        # Create Tab2
-        self.tab2 = ttk.Frame(self.tabControl)
-        self.tabControl.add(self.tab2, text='Analysis')
-        self.tab2.columnconfigure(0,weight=0,minsize=480)
-        self.tab2.columnconfigure(1,weight=1)
-        self.tab2.rowconfigure(3,weight=1)
-
         # Create Tab3
         self.tab3 = ttk.Frame(self.tabControl)
         self.tabControl.add(self.tab3, text='Help')
@@ -62,7 +54,6 @@ class WireScanApp(tk.Tk):
 
         # Add widgets to Tab1
         self.create_widgets_in_tab1()
-        self.create_widgets_in_tab2()
         self.create_widgets_in_tab3()
         self.bind_all('<Button>', self.change_focus)
     
@@ -159,78 +150,6 @@ class WireScanApp(tk.Tk):
         abort_button.grid(column=2, row=1, columnspan=1, padx=1, pady=1)
         self.buttons["Abort"] = abort_button
 
-    def create_widgets_in_tab2(self): 
-        frameB1 = ttk.LabelFrame(self.tab2,borderwidth=5,relief="solid",labelanchor="nw",text="Load Data")
-        frameB1.grid(column=0,row=0,columnspan=1,pady=1,sticky="nw")
-        frameB2 = ttk.Label(self.tab2)
-        frameB2.grid(column=0,row=1,columnspan=1,pady=1,sticky="w")
-        frameB3 = ttk.LabelFrame(self.tab2,borderwidth=5,relief="solid",labelanchor="nw",text="Uploaded Data")
-        frameB3.grid(column=0,row=2,columnspan=1,pady=1,sticky="w")
-        frameB4 = ttk.LabelFrame(self.tab2,borderwidth=5,relief="solid",labelanchor="n",text="Analysis Messages")
-        frameB4.grid(column=0,row=3,columnspan=1,pady=1,sticky="wes")
-        frameB5 = ttk.Frame(self.tab2,borderwidth=5,relief="solid")
-        frameB5.grid(column=1,row=0,columnspan=1,rowspan=5,pady=1,sticky="nesw")
-
-        # frameB1
-        textB11 = "Select Data"
-        labelB1 = ttk.Label(frameB1, text=textB11)
-        labelB1.grid(column=0, row=0, sticky='w', padx=5, pady=5)
-        #ToolTip(labelB1,basicdata.tooltips[textB11])
-        entryB1 = ttk.Entry(frameB1)
-        entryB1.grid(column=1, row=0, sticky='ew', padx=5, pady=2)
-        self.anaentries[textB11] = entryB1
-        buttonB1_browse = ttk.Button(frameB1, text='Browse', command=lambda e=entryB1, t=textB11: self.browse(e,t))
-        buttonB1_browse.grid(column=2, row=0, padx=5, pady=2)
-        buttonB1_upload = ttk.Button(frameB1, text='Upload', command=lambda: self.addanadata(tree1,frameB5)) 
-        buttonB1_upload.grid(column=3, row=0, sticky='e', padx=5, pady=2)
-
-        # frameB2
-        frameB21 = ttk.LabelFrame(frameB2,borderwidth=5,relief="solid",labelanchor="nw",text="Analysis Actions")
-        frameB21.grid(column=0,row=0,sticky='w')
-        frameB22 = ttk.LabelFrame(frameB2,borderwidth=5,relief="solid",labelanchor="nw",text="Plot Actions")
-        frameB22.grid(column=1,row=0,sticky='e')
-        # frameB21
-        labelB21 = ttk.Label(frameB21, text="Fit")
-        labelB21.grid(column=0, row=0, sticky='w', padx=5, pady=5)
-        comboB21 = ttk.Combobox(frameB21,state="readonly",values=["Gaussian","Summed Gaussian"],width=17)
-        comboB21.grid(column=1, row=0, sticky='w', padx=2, pady=2)
-        # entryB21 = ttk.Entry(frameB21)
-        # entryB21.grid(column=2, row=0, sticky='ew', padx=5, pady=2)
-        analyze_button = ttk.Button(frameB21, text='Analyze',command=lambda: self.analyzeA())
-        analyze_button.grid(column=3,row=0,sticky='e')
-        # frameB22
-        labelB22 = ttk.Label(frameB22, text="Plot")
-        labelB22.grid(column=0, row=0, sticky='w', padx=5, pady=5)        
-        comboB22 = ttk.Combobox(frameB22,state="readonly",values=basicdata.plots,width=5)
-        comboB22.grid(column=1, row=0, sticky='w', padx=2, pady=2)
-        plot_button = ttk.Button(frameB22, text='Plot/Unplot', command=lambda: self.plotA(tree1,textB4,comboB22))
-        plot_button.grid(column=2, row=0, sticky='w', padx=2, pady=2)
-
-        # frameB3
-        sA3 = tk.Scrollbar(frameB3)
-        sA3.pack(side=tk.RIGHT,fill=tk.Y)
-        tree1 = ttk.Treeview(frameB3, height=4, yscrollcommand=sA3.set,selectmode='browse')
-        tree1.bind("<1>",lambda event: self.treedefocus(tree1,event))
-        tree1columns = ('module','dir','type','plot1','plot2','plot3')
-        tree1['columns'] = tree1columns
-        for item in tree1columns: 
-            tree1.column(item, width=55, anchor='center',stretch=0)
-        tree1.column('#0', width=95, anchor='w',stretch=0)
-        tree1.heading('module',text="Module")
-        tree1.heading('dir',text="Direction")
-        tree1.heading('type',text="Type")
-        tree1.heading('plot1',text="Plot1")
-        tree1.heading('plot2',text="Plot2")
-        tree1.heading('plot3',text="Plot3")
-        tree1.pack(side=tk.LEFT,fill=tk.Y)
-
-        # frame B4
-        sA1 = tk.Scrollbar(frameB4)
-        sA1.pack(side=tk.RIGHT,fill=tk.Y)
-        textB4 = tk.Text(frameB4,height = 4,width=56,state="disabled",yscrollcommand=sA1.set,wrap=tk.WORD)
-        textB4.pack(side=tk.LEFT,fill=tk.Y)
-        self.anaentries["MessagesA"] = textB4
-
     def create_widgets_in_tab3(self):
         # create subframes in tab3
         frameh00 = ttk.LabelFrame(self.tab3,borderwidth=5,relief="solid",labelanchor="nw",text="General Help")
@@ -243,7 +162,7 @@ class WireScanApp(tk.Tk):
         # frameh00
         sh1 = tk.Scrollbar(frameh00)
         sh1.pack(side=tk.RIGHT,fill=tk.Y)
-        texth1 = tk.Text(frameh00,height=4,state="disabled",yscrollcommand=sh1.set,wrap=tk.WORD)
+        texth1 = tk.Text(frameh00,height=11,state="disabled",yscrollcommand=sh1.set,wrap=tk.WORD,relief="flat")
         texth1.pack(side=tk.LEFT,fill=tk.Y)
         self.entries["Help1"] = texth1
         self.messageprint(basicdata.helpstrings[1],texth1)
@@ -252,7 +171,7 @@ class WireScanApp(tk.Tk):
         # frameh10
         sh2 = tk.Scrollbar(frameh10)
         sh2.pack(side=tk.RIGHT,fill=tk.Y)
-        texth2 = tk.Text(frameh10,height=10,state="disabled",yscrollcommand=sh2.set,wrap=tk.WORD)
+        texth2 = tk.Text(frameh10,height=18,state="disabled",yscrollcommand=sh2.set,wrap=tk.WORD,relief="flat")
         texth2.pack(side=tk.LEFT,fill=tk.Y)
         self.entries["Help2"] = texth2
         self.messageprint(basicdata.helpstrings[2],texth2)
@@ -261,7 +180,7 @@ class WireScanApp(tk.Tk):
         # frameh01
         sh3 = tk.Scrollbar(frameh01)
         sh3.pack(side=tk.RIGHT,fill=tk.Y)
-        texth3 = tk.Text(frameh01,height=4,state="disabled",yscrollcommand=sh3.set,wrap=tk.WORD)
+        texth3 = tk.Text(frameh01,height=4,state="disabled",yscrollcommand=sh3.set,wrap=tk.WORD,relief="flat")
         texth3.pack(side=tk.LEFT,fill=tk.Y)
         self.entries["Help3"] = texth3
         self.messageprint(basicdata.helpstrings[3],texth3)
@@ -337,75 +256,11 @@ class WireScanApp(tk.Tk):
                 self.plotinit(0,frameB5)
                 # autopopulate the plots with the first data
 
-    def plotA(self,tree,textB4,comboB22): 
-        """Plot or unplot a dataset on a specific plot.""" 
-        #{"Frame":{},"Canvas":{},"Fig":{},"Ax":{},"ScatterObj":{}} each dict keys are basicdata.plots 
-        if not tree.selection(): 
-            self.messageprint("Please select a dataset in the Uploaded Data table before executing an action. \n",textB4)
-            return
-        else: 
-            item = basicfuncs.strtonum(tree.selection()[0])
-        if comboB22.get().strip() == "": 
-            self.messageprint("Please select a plot to apply the action to. \n",textB4)
-            return
-        else: 
-            plot = comboB22.get().strip()
-
-        if self.treedata[math.floor(item)]["entries"][item][plot] == False: 
-            if tree.item(item)['values'][2] == "Raw": 
-                self.treedata[math.floor(item)]["entries"][item][plot] = self.plotobjects2["Ax"][plot].scatter( 
-                    self.treedata[math.floor(item)]["entries"][item]["X"],
-                    self.treedata[math.floor(item)]["entries"][item]["Y"],
-                    label=self.treedata[math.floor(item)]["entries"][item]["labels"][1]+" vs. "+self.treedata[math.floor(item)]["entries"][item]["labels"][0],
-                    color=basicdata.colorlist1[self.plotobjects2["Color1"]]
-                    )
-                self.plotobjects2["Color1"]+=1
-            elif tree.item(item)['values'][2] == "Fit": 
-                self.treedata[math.floor(item)]["entries"][item][plot] = self.plotobjects2["Ax"][plot].plot(
-                    self.treedata[math.floor(item)]["entries"][item]["X"],
-                    self.treedata[math.floor(item)]["entries"][item]["Y"],
-                    basicdata.markerlinelist[self.plotobjects2["Color2"]],
-                    label=self.treedata[math.floor(item)]["entries"][item]["labels"][1],
-                    color=basicdata.colorlist2[self.plotobjects2["Color2"]],
-                    scaley=True #TODO test me?
-                    )
-                self.plotobjects2["Color2"]+=1
-            self.plotobjects2["Ax"][plot].legend()
-            tree.set(item,plot.lower(),u'\u2713')
-        else: 
-            if tree.item(item)['values'][2] == "Raw": 
-                self.treedata[math.floor(item)]["entries"][item][plot].remove()
-                self.plotobjects2["Color1"]-=1
-            elif tree.item(item)['values'][2] == "Fit": 
-                self.treedata[math.floor(item)]["entries"][item][plot][0].remove()
-                self.plotobjects2["Color2"]-=1
-            self.treedata[math.floor(item)]["entries"][item][plot] = False
-            self.plotobjects2["Ax"][plot].legend() # TODO fix the print error
-            #self.plotobjects2["Ax"][plot].autoscale_view()
-            self.plotobjects2["Ax"][plot].relim()
-            tree.set(item,plot.lower(),"")
-        self.plotobjects2["Canvas"][plot].draw()
-
-        # add legend info
-        # fix autoscaling
-        # add colors
-        # things disappear when window resized interestingly....        
-
-    def analyze(self): 
-        print("analyzing")
-
     def testcalc(self): # to delete later, a temporary test button mapping
         print(self.acsyscontrol.get_list_of_threads())
         # # self.addparampopup()
         # print("--"+self.entries['Out Limit'].get().strip()+"--")
         print("yippee") 
-
-    def treedefocus(self,tree,event):
-        selection = tree.selection()
-        item = tree.identify_row(event.y)
-        if item in selection:
-            tree.selection_remove(item)
-            return "break"     
 
     def change_focus(self,event):
         """Removes focus from previous focus when clicked elsewhere."""
@@ -497,12 +352,7 @@ class WireScanApp(tk.Tk):
             plotobj["Canvas"][key].draw()          
             plotobj["Fig"][key].set_tight_layout(True) 
         frame10.columnconfigure(0,weight=1)
-        if value == 0: 
-            plotobj["Color1"]= 0
-            plotobj["Color2"]= 0
-            self.plotobjects2 = plotobj
-        else: 
-            self.plotobjects1 = plotobj
+        self.plotobjects1 = plotobj
 
     def readbackpopup(self,value,frame011):
         """Populate a frame with wire position and signal readbacks everytime a wire is selected."""
@@ -861,7 +711,7 @@ class WireScanApp(tk.Tk):
                 self.acsyscontrol.setparam(basicdata.pdict[self.entries["Wire"].get().strip()][0],-12700)
                 self.messageprint("Out setting issued to "+basicdata.pdict[self.entries["Wire"].get().strip()][0]+".\n")
             except ValueError:
-                self.messageprint("Invalid Kerberos realm..\n") 
+                self.messageprint("Invalid Kerberos realm.\n") 
         else: 
             self.messageprint("No wire selected, cannot pull wire out.\n")
         

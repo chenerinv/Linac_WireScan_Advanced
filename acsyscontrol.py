@@ -29,13 +29,17 @@ async def updatereadback_1H(con,threadcontext,strvardict):
             else: 
                 pass  
 
-async def runscan(con,threadcontext,maindict): 
+async def runscan(con,threadcontext,maindict,messageprint): 
     """Run a scan."""
     # setup context
     async with acsys.dpm.DPMContext(con,dpm_node="DPM03") as dpm:
         # configure setting:
         # check kerberos credentials and enable settings
-        # await dpm.enable_settings(role='linac_wirescan') #TODO UNCOMMENT WHEN ALLOWED TO MOVE WS!!!
+        try: 
+            await dpm.enable_settings(role='linac_wirescan') #TODO UNCOMMENT WHEN ALLOWED TO MOVE WS!!!
+        except: 
+            messageprint("Invalid Kerberos realm.\n")  #TODO change to messageprint
+            return
         # add acquisition requests
         await dpm.add_entry(-1,'G:AMANDA@p,1H') # this is to let us check set even without an event
         await dpm.add_entry(0, 'L:'+maindict['Wire']+'WPX.SETTING@N')  
@@ -47,7 +51,7 @@ async def runscan(con,threadcontext,maindict):
         # issue appropriate setting 
         if maindict["Direction"] == 1: steps = maindict["Steps"]*-1
         elif maindict["Direction"] == 0: steps = maindict["Steps"]
-        # await dpm.apply_settings([(0, steps)]) # set value  #TODO UNCOMMENT WHEN ALLOWED TO MOVE WS!!!
+        await dpm.apply_settings([(0, steps)]) # set value  #TODO UNCOMMENT WHEN ALLOWED TO MOVE WS!!!
         g = 0
 
         # start acquisition
@@ -72,9 +76,9 @@ async def runscan(con,threadcontext,maindict):
                     threadcontext['outdict']['stamps'].append(evt_res.stamp.timestamp())
 
                     g=g+1 # TODO COMMENT SECTION WHEN ALLOWED TO MOVE WS
-                    if g > 1000: 
-                        threadcontext['stop'].set()
-                        print("threadstopped in temporary counter!")            
+                    # if g > 1000: 
+                    #     threadcontext['stop'].set()
+                    #     print("threadstopped in temporary counter!")            
             else: 
                 pass # this is likely a status response
 
@@ -195,7 +199,7 @@ class acsyscontrol:
     def mainscan(self,thread_name,coutput,lockentries,messageprint,plot_thread_name): 
         """Execute mainscan."""
         try: 
-            acsys.run_client(runscan,threadcontext=self.thread_dict[thread_name],maindict=coutput)             
+            acsys.run_client(runscan,threadcontext=self.thread_dict[thread_name],maindict=coutput,messageprint=messageprint)             
         finally: 
             # save data in threaddict to csv raw
             basicfuncs.dicttocsv(self.thread_dict[thread_name]['outdict'],os.path.join(coutput["WS Directory"],"_".join([str(coutput["Timestamp"]),coutput["Wire"],"RawData.csv"])))
@@ -208,7 +212,8 @@ class acsyscontrol:
             procdata = basicfuncs.rawtowires(self.thread_dict[thread_name]['outdict'],coutput["Wire"])
             basicfuncs.dicttocsv(procdata,os.path.join(coutput["WS Directory"],"_".join([str(coutput["Timestamp"]),coutput["Wire"],"ProcData.csv"])))
             # analyze data
-            self.dataanalysis.endscanproc(procdata,coutput)
+            if self.thread_dict[thread_name]['outdict']['tags'] != []: # skip analysis if the dict is empty
+                self.dataanalysis.endscanproc(procdata,coutput)
             # thread done, can be closed
             self.thread_dict[thread_name]['finally'].set()
             messageprint("Scan closed.\n")
