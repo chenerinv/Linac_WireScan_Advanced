@@ -3,10 +3,10 @@ Program to collect Linac wire scanner data using the fastest motor speed.
 
 ## Bugs & To-Do 
 
+- add a number of data points per position option
+- add a number of scans option
 - remove the upload button and have its functionalities be absorbed into the completion of "Browse"
-
 - add example json to help page
-
 - troubleshoot why D81, 83, E1, E3 don't work with acsys...
 - fix that click focus hates combobox -- there's a pass right now to prevent the error
 - lock access to dictionaries that are being accessed in multiple places [see Rich advice on Slack], specifically the set function
