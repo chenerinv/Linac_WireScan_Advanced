@@ -38,10 +38,13 @@ async def runscan(con,threadcontext,maindict,messageprint):
         try: 
             await dpm.enable_settings(role='linac_wirescan') #TODO UNCOMMENT WHEN ALLOWED TO MOVE WS!!!
         except: 
-            messageprint("Invalid Kerberos realm.\n")  #TODO change to messageprint
+            messageprint("Invalid Kerberos realm.\n") 
             return
         # add acquisition requests
-        await dpm.add_entry(-1,'G:AMANDA@p,1H') # this is to let us check set even without an event
+        if maindict["Event"] == "0A":
+            await dpm.add_entry(-2,'L:BSTUDY.STATUS@e,'+maindict['Event'])
+            await dpm.add_entry(-3, 'L:BSTUDY.CONTROL@N') 
+            await dpm.add_entry(-1,'G:AMANDA@p,1H') # this is to let us check set even without an event
         await dpm.add_entry(0, 'L:'+maindict['Wire']+'WPX.SETTING@N')  
 
         # add acquisition requests
@@ -63,19 +66,26 @@ async def runscan(con,threadcontext,maindict,messageprint):
                 break
             if evt_res.isReading: 
                 # skip the setting & 1H setting and save data for all other tags
-                if (evt_res.isReadingFor(0) is False) and (evt_res.isReadingFor(-1) is False): 
-                    if evt_res.isReadingFor(1): # check the position
+                if (evt_res.isReadingFor(0) is False) and (evt_res.isReadingFor(-1) is False) and (evt_res.isReadingFor(-3) is False): # no settings and no dummy 1 Hz
+                    if evt_res.isReadingFor(1): # when reading position, check the position
                         if maindict["Direction"] == 0: 
                             if evt_res.data > maindict["In Limit"]: 
                                 threadcontext['stop'].set()
                         elif maindict["Direction"] == 1: 
                             if evt_res.data < maindict["Out Limit"]: 
                                 threadcontext['stop'].set()
-                    threadcontext['outdict']['tags'].append(evt_res.tag)
-                    threadcontext['outdict']['data'].append(evt_res.data)
-                    threadcontext['outdict']['stamps'].append(evt_res.stamp.timestamp())
-
-                    g=g+1 # TODO COMMENT SECTION WHEN ALLOWED TO MOVE WS
+                    elif evt_res.isReadingFor(-2): 
+                        if evt_res.data["on"] == False: 
+                            print("Lost L:BSTUDY!")
+                            # await dpm.apply_settings([(0, 0)]) # you could have the WS stop moving when it cuts out, but the control response is so immediate i doubt it's necessary
+                            await dpm.apply_settings([(-3,"on")])
+                            print("Reenabled L:BSTUDY automatically.")
+                            await dpm.apply_settings([(0, steps)])
+                    if (evt_res.isReadingFor(-2) is False): # also don't read the bstudy setting
+                        threadcontext['outdict']['tags'].append(evt_res.tag)
+                        threadcontext['outdict']['data'].append(evt_res.data)
+                        threadcontext['outdict']['stamps'].append(evt_res.stamp.timestamp())
+                    # g=g+1 # TODO COMMENT SECTION WHEN ALLOWED TO MOVE WS
                     # if g > 1000: 
                     #     threadcontext['stop'].set()
                     #     print("threadstopped in temporary counter!")            
