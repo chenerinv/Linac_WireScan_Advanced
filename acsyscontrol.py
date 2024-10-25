@@ -76,10 +76,10 @@ async def runscan(con,threadcontext,maindict,messageprint):
                                 threadcontext['stop'].set()
                     elif evt_res.isReadingFor(-2): 
                         if evt_res.data["on"] == False: 
-                            print("Lost L:BSTUDY!")
+                            messageprint("Lost L:BSTUDY!\n")
                             # await dpm.apply_settings([(0, 0)]) # you could have the WS stop moving when it cuts out, but the control response is so immediate i doubt it's necessary
                             await dpm.apply_settings([(-3,"on")])
-                            print("Reenabled L:BSTUDY automatically.")
+                            messageprint("Reenabled L:BSTUDY automatically.\n")
                             await dpm.apply_settings([(0, steps)])
                     if (evt_res.isReadingFor(-2) is False): # also don't read the bstudy setting
                         threadcontext['outdict']['tags'].append(evt_res.tag)
