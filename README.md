@@ -2,7 +2,7 @@
 Program to collect Linac wire scanner data using the fastest motor speed. 
 
 ## Bugs & To-Do 
-
+- add LSTUDY enable/disable button and automatically start and stop L:STUDY upon a scan
 - add a number of data points per position option
 - add a number of scans option
 - remove the upload button and have its functionalities be absorbed into the completion of "Browse"
