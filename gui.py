@@ -16,7 +16,7 @@ from dataanalysis import dataanalysis
 class WireScanApp(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title("Constant Speed Wire Scan App")
+        self.title("Bunch Length Detector Data Collector")
         self.geometry("850x365")
         self.minsize(850,365)
         self.entries = {} # tk entries
@@ -38,29 +38,23 @@ class WireScanApp(tk.Tk):
         self.tab1 = ttk.Frame(self.tabControl)
         self.tabControl.add(self.tab1, text='Setup')
         self.tabControl.pack(expand=1, fill="both")
-        self.tab1.columnconfigure(0,weight=0,minsize=480)
+        self.tab1.columnconfigure(0,weight=0,minsize=545)
         self.tab1.columnconfigure(1,weight=1)
         self.tab1.rowconfigure(4,weight=1)
 
         # Create Tab3
-        self.tab3 = ttk.Frame(self.tabControl)
-        self.tabControl.add(self.tab3, text='Help')
-        self.tab3.columnconfigure(0,weight=1,minsize=425)
-        self.tab3.columnconfigure(1,weight=1,minsize=425)
-
-        # Create Advanced Parameters Window (hidden until opened)
-        self.AdvChild = Adv_Window(self)
-        self.AdvChild.withdraw()
+        # self.tab3 = ttk.Frame(self.tabControl)
+        # self.tabControl.add(self.tab3, text='Help')
+        # self.tab3.columnconfigure(0,weight=1,minsize=425)
+        # self.tab3.columnconfigure(1,weight=1,minsize=425)
 
         # Add widgets to Tab1
         self.create_widgets_in_tab1()
-        self.create_widgets_in_tab3()
+        # self.create_widgets_in_tab3()
         self.bind_all('<Button>', self.change_focus)
     
     def create_widgets_in_tab1(self): 
         # create subframes in tab1
-        frame00 = ttk.LabelFrame(self.tab1,borderwidth=5,relief="solid",labelanchor="nw",text="Quick Setup")
-        frame00.grid(column=0,row=0,columnspan=1,pady=1,sticky="nw")
         frame01 = ttk.Frame(self.tab1)
         frame01.grid(column=0,row=1,columnspan=1,pady=1,sticky="w")
         frame02 = ttk.LabelFrame(self.tab1,borderwidth=5,relief="solid",labelanchor="nw",text="Control")
@@ -75,53 +69,39 @@ class WireScanApp(tk.Tk):
         # frame04
         s1 = tk.Scrollbar(frame04)
         s1.pack(side=tk.RIGHT,fill=tk.Y)
-        text1 = tk.Text(frame04,height = 4,width=56,state="disabled",yscrollcommand=s1.set,wrap=tk.WORD)
+        text1 = tk.Text(frame04,height = 4,width=64,state="disabled",yscrollcommand=s1.set,wrap=tk.WORD)
         text1.pack(side=tk.LEFT,fill=tk.Y)
         self.entries["Messages"] = text1
         s1.config(command=text1.yview)
 
         # frame01
-        frame010 = ttk.LabelFrame(frame01,borderwidth=5,relief="solid",labelanchor="nw",text="Wire")
+        frame010 = ttk.LabelFrame(frame01,borderwidth=5,relief="solid",labelanchor="nw",text="BLD Selection")
         frame010.grid(column=0,row=0,columnspan=1,pady=1,sticky="w")
-        frame011 = ttk.LabelFrame(frame01,borderwidth=5,relief="solid",labelanchor="nw",text="Readbacks")
-        frame011.grid(column=1,row=0,columnspan=1,pady=1,sticky="e") # nested in frame 01, so must be made here not readbackpopup()
-
-        # frame00
-        text00 = "Setup Parameters"
-        label00 = ttk.Label(frame00, text=text00)
-        label00.grid(column=0, row=0, sticky='w', padx=5, pady=5)
-        ToolTip(label00,basicdata.tooltips[text00])
-        entry00 = ttk.Entry(frame00)
-        entry00.grid(column=1, row=0, sticky='ew', padx=5, pady=2)
-        self.entries[text00] = entry00
-        browse_button_00 = ttk.Button(frame00, text='Browse', command=lambda e=entry00, t=text00: self.browse(e,t))
-        browse_button_00.grid(column=2, row=0, padx=5, pady=2)
-        self.buttons["Browse1"] = browse_button_00
-        upload_button = ttk.Button(frame00, text='Upload', command=lambda: self.loadsetp(frame011,frame10)) #TODO remove & integrate into browse1
-        upload_button.grid(column=3, row=0, sticky='e', padx=5, pady=2)
-        self.buttons["Upload"] = upload_button
+        frame011 = ttk.LabelFrame(frame01,borderwidth=5,relief="solid",labelanchor="n",text="Readbacks")
+        frame011.grid(column=1,row=0,columnspan=1,pady=1,sticky="n") # nested in frame 01, so must be made here not readbackpopup()
 
         # frame010
-        labels = ["Wire","Out Limit","In Limit", "Event"]
+        labels = ["BLD","User Comment","Event","Additional Parameters"]
         for i, text in enumerate(labels):
             label = ttk.Label(frame010, text=text)
-            label.grid(column=i, row=0, sticky='n', padx=2, pady=2)
+            if i<3: 
+                label.grid(column=i, row=0, sticky='w', padx=2, pady=2)
+            else: 
+                label.grid(column=i-3, row=2, columnspan=3, sticky='w', padx=2, pady=2)
             ToolTip(label,basicdata.tooltips[text])
-        entry010_0 = ttk.Entry(frame010,width=8)
-        entry010_0.grid(column=1, row=1, sticky='s', padx=2, pady=2)
-        self.entries[labels[1]] = entry010_0
-        entry010_1 = ttk.Entry(frame010,width=8)
-        entry010_1.grid(column=2, row=1, sticky='s', padx=2, pady=2)
-        self.entries[labels[2]] = entry010_1
         combo010_0 = ttk.Combobox(frame010,state="readonly",values=list(basicdata.pdict.keys()),width=4) 
         combo010_0.grid(column=0, row=1, sticky='s', padx=2, pady=2)
         combo010_0.bind("<<ComboboxSelected>>", lambda event: self.selectedwire(frame011,frame10))
         self.entries[labels[0]] = combo010_0
+        entry010_0 = ttk.Entry(frame010,width=25)
+        entry010_0.grid(column=1, row=1, sticky='s', padx=2, pady=2)
+        self.entries[labels[1]] = entry010_0
         combo010_1 = ttk.Combobox(frame010,state="readonly",values=basicdata.events,width=3)
-        combo010_1.grid(column=3, row=1, sticky='s', padx=2, pady=2)
-        self.entries[labels[3]] = combo010_1
-        adv_button = ttk.Button(frame010, text="Advanced Settings", command=self.open_advwindow)
-        adv_button.grid(column=0, row=2, columnspan=4, padx=1, pady=1)
+        combo010_1.grid(column=2, row=1, sticky='s', padx=2, pady=2)
+        self.entries[labels[2]] = combo010_1
+        entry010_1 = ttk.Entry(frame010,width=40)
+        entry010_1.grid(column=0,row=4, columnspan = 3,sticky="w",padx=2, pady=2)
+        self.entries[labels[3]] = entry010_1
 
         # frame011 (Readbacks), frame10 (Plots)
             # blank unless selectedwire activates
@@ -143,9 +123,9 @@ class WireScanApp(tk.Tk):
         start_button = ttk.Button(frame02, text="Start", command= lambda: self.startbutton(frame03))
         start_button.grid(column=0, row=1, columnspan=1, padx=1, pady=1)
         self.buttons["Start"] = start_button
-        wout_button = ttk.Button(frame02, text="Wires Out", command=self.wiresout)
-        wout_button.grid(column=1, row=1, columnspan=1, padx=1, pady=1)
-        self.buttons["Wires Out"] = wout_button
+        stop_button = ttk.Button(frame02, text="Stop", command= lambda: self.stopbutton())
+        stop_button.grid(column=1, row=1, columnspan=1, padx=1, pady=1)
+        self.buttons["Stop"] = stop_button
         abort_button = ttk.Button(frame02, text="Abort", command=self.abortbutton)
         abort_button.grid(column=2, row=1, columnspan=1, padx=1, pady=1)
         self.buttons["Abort"] = abort_button
@@ -187,75 +167,6 @@ class WireScanApp(tk.Tk):
         sh3.config(command=texth3.yview)
 
 # commands:
-    def addanadata(self,tree,frameB5): 
-        dirpath = self.anaentries["Select Data"].get().strip() 
-        if dirpath == "": 
-            self.messageprint("Please add the path to a folder before pressing upload.\n")
-            return
-        else: 
-            # upload all the data into treedata
-            if not self.treedata: entrynumber = 1
-            else: entrynumber = max(self.treedata.keys())+1
-            self.treedata[entrynumber] = {"path": dirpath}
-            for file in os.listdir(dirpath): 
-                filepath = os.path.join(dirpath,file)
-                if file[-13:] == "Metadata.json": 
-                    with open(filepath) as json_file: 
-                        self.treedata[entrynumber]["metadata"] = json.load(json_file)
-                elif file[-12:] == "ProcData.csv": 
-                    self.treedata[entrynumber]["procdata"] = basicfuncs.csvtodict(filepath)
-                elif file[-13:] == "FitStats.json": 
-                    if "fitstats" not in self.treedata[entrynumber]: 
-                        self.treedata[entrynumber]['fitstats'] = {}
-                    with open(filepath) as json_file:
-                        self.treedata[entrynumber]["fitstats"][file[-23]] = json.load(json_file)
-            # start populating the tree
-            self.treedata[entrynumber]["entries"] = {}
-            datasets = [x for x in list(self.treedata[entrynumber]["procdata"].keys()) if x[-2]=="P"]
-            module = datasets[0][2:5]
-            # add raw data
-            for i,poskey in enumerate(datasets): 
-                value = (module,poskey[-1],"Raw")
-                if i == 0: 
-                    tree.insert('','end',entrynumber,text=self.treedata[entrynumber]["metadata"]["Timestamp"],values=value)
-                    self.treedata[entrynumber]["entries"][entrynumber] = {
-                        "X": self.treedata[entrynumber]["procdata"][poskey], 
-                        "Y" :self.treedata[entrynumber]["procdata"][basicdata.sdict[module][i]], 
-                        "labels": [poskey,basicdata.sdict[module][i]],
-                        "Plot1": False,
-                        "Plot2": False,
-                        "Plot3": False
-                        }
-                else: 
-                    tempnum = round(list(self.treedata[entrynumber]["entries"].keys())[-1]+0.1,1)
-                    tree.insert(entrynumber,'end',tempnum,values=value)
-                    self.treedata[entrynumber]["entries"][tempnum] = {
-                        "X": self.treedata[entrynumber]["procdata"][poskey], 
-                        "Y": self.treedata[entrynumber]["procdata"][basicdata.sdict[module][i]], 
-                        "labels": [poskey,basicdata.sdict[module][i]],
-                        "Plot1": False,
-                        "Plot2": False,
-                        "Plot3": False
-                    }
-                
-            # add fit data
-            if "fitstats" in self.treedata[entrynumber]:
-                for key in list(self.treedata[entrynumber]["fitstats"].keys()): 
-                    tempnum = round(list(self.treedata[entrynumber]["entries"].keys())[-1]+0.1,1)
-                    tree.insert(entrynumber,'end',tempnum,values=(module,key,"Fit"))
-                    self.treedata[entrynumber]["entries"][tempnum] = {
-                        "X": np.linspace(-50,-45,600), # figure out how to select these bounds dynamically? 
-                        "Y": self.datanalysis.generatefitline(np.linspace(-50,-45,600),self.treedata[entrynumber]["fitstats"][key],"gauss"),
-                        "labels": ["Position",key+" Fit"],
-                        "Plot1": False,
-                        "Plot2": False,
-                        "Plot3": False
-                    }
-
-            if entrynumber == 1: 
-                self.plotinit(0,frameB5)
-                # autopopulate the plots with the first data
-
     def testcalc(self): # to delete later, a temporary test button mapping
         print(self.acsyscontrol.get_list_of_threads())
         # # self.addparampopup()
@@ -267,38 +178,13 @@ class WireScanApp(tk.Tk):
         try: event.widget.focus_set()
         except: pass # TODO FIX THIS!!! it bugs out at the combobox...
 
-    def open_advwindow(self):
-        """Open pop-up window with Advanced Parameters. Steals focus until window is closed."""
-        self.AdvChild.deiconify()
-        self.AdvChild.grab_set() # keep focus on advanced param window
-
     def browse(self, entry_widget, text):
         """Browse for a file."""
-        if text == 'Setup Parameters':
-            filename = filedialog.askopenfilename(filetypes=[("JSON files", "*.json")])
-            if filename:
-                entry_widget.delete(0, tk.END)
-                entry_widget.insert(0, filename)
-                self.workdir = os.path.dirname(filename)
-        elif text == 'Save Directory':
+        if text == 'Save Directory':
             directory = filedialog.askdirectory()
             if directory:
                 entry_widget.delete(0, tk.END)
                 entry_widget.insert(0, directory)
-        elif text == "Select Data": 
-            directories = filedialog.askdirectory() # need tkfilebrowser installed to be able to select multiple directories.
-            if directories:
-                entry_widget.delete(0, tk.END)
-                entry_widget.insert(0, directories)
-
-    def changelims(self, keywidget, value):
-        """Automatically change the in/out limits based on selection of wire."""
-        widget1 = self.entries[keywidget]
-        widget1.delete(0, tk.END)
-        if keywidget == "Out Limit": 
-            widget1.insert(tk.END, basicdata.outlimdict[value])
-        elif keywidget == "In Limit":
-            widget1.insert(tk.END, basicdata.inlimdict[value])
 
     def messageprint(self,message,*widgets): 
         """Prints message to any supplied Text widget or defaults to main Message Box."""
@@ -312,9 +198,7 @@ class WireScanApp(tk.Tk):
 
     def selectedwire(self,frame011,frame10): 
         """Initiates all changes upon selecting a wire: changing limits, initiates live readbacks, initializes plot setup."""
-        value = self.entries["Wire"].get().strip() # could have used event.widget.get() if we passed event through lambda
-        self.changelims("Out Limit",value)
-        self.changelims("In Limit",value)
+        value = self.entries["BLD"].get().strip() # could have used event.widget.get() if we passed event through lambda
         self.readbackpopup(value,frame011) #technically could get value in these, but it is easier to just pass it?
         self.plotinit(value,frame10)
 
@@ -341,8 +225,8 @@ class WireScanApp(tk.Tk):
             plotobj["Canvas"][key].get_tk_widget().pack(expand=1,fill="both")
             plotobj["Ax"][key] = plotobj["Fig"][key].add_subplot(111)
             if value == 0: 
-                plotobj["Ax"][key].set_xlabel("Position (mm)",fontsize=9)
-                plotobj["Ax"][key].set_ylabel("Intensity (V)",fontsize=9)
+                plotobj["Ax"][key].set_xlabel("Trombone phase (deg@201 MHz)",fontsize=9)
+                plotobj["Ax"][key].set_ylabel("EMT Signal (V)",fontsize=9)
             else: 
                 plotobj["Ax"][key].set_xlabel(key,fontsize=9)
                 plotobj["Ax"][key].set_ylabel(basicdata.sdict[value][i],fontsize=9)
@@ -366,25 +250,18 @@ class WireScanApp(tk.Tk):
             if key in list(self.readbacks.keys()): 
                 del self.readbacks[key]
         # create and print readbacks. StringVar to let it be changeable
-        pos, sig = basicdata.pdict[value], basicdata.sdict[value]
-        for i, text in enumerate(pos):
+        params = basicdata.allparams[value]
+        units = basicdata.unitlist
+        for i, text in enumerate(params):
             label = ttk.Label(frame011, text=text+":")
-            label.grid(column=0, row=i, sticky='n', padx=0, pady=2)
+            label.grid(column=(i%2)*3, row=math.floor(i/2), sticky='n', padx=0, pady=2)
             self.readbacks[text] = tk.StringVar()
             self.pastreadbacks[1].append(text)
             label1 = ttk.Label(frame011, textvariable=self.readbacks[text]) 
-            label1.grid(column=1, row=i, sticky='n', padx=0, pady=2)
-            label2 = ttk.Label(frame011, text=" mm")
-            label2.grid(column=2, row=i, sticky='n', padx=2, pady=2)
-        for i, text in enumerate(sig):
-            label = ttk.Label(frame011, text=text+":")
-            label.grid(column=3, row=i, sticky='n', padx=2, pady=2)
-            self.readbacks[text] = tk.StringVar()
-            self.pastreadbacks[1].append(text)
-            label1 = ttk.Label(frame011, textvariable=self.readbacks[text]) 
-            label1.grid(column=4, row=i, sticky='n', padx=0, pady=2)
-            label2 = ttk.Label(frame011, text=" V")
-            label2.grid(column=5, row=i, sticky='n', padx=0, pady=2)
+            label1.grid(column=(i%2)*3+1, row=math.floor(i/2), sticky='n', padx=0, pady=2)
+            label2 = ttk.Label(frame011, text=units[i])
+            label2.grid(column=(i%2)*3+2, row=math.floor(i/2), sticky='n', padx=2, pady=2)
+
         # start the thread to fetch and plot readbacks
         self.start_readback_thread()
 
@@ -450,8 +327,7 @@ class WireScanApp(tk.Tk):
             tf, tval = basicfuncs.checktype(tval,ctype)
             if tf is False: 
                 self.messageprint(key+" is not of appropriate data type "+str(ctype)+".\n")
-
-            if key == "Wire": 
+            if key == "BLD": 
                 tval = tval.strip()
                 if tval not in list(basicdata.pdict.keys()): 
                     self.messageprint(tval+" is an invalid wire.\n")
@@ -461,141 +337,16 @@ class WireScanApp(tk.Tk):
                 if tval not in basicdata.events: 
                     self.messageprint(tval+" is an invalid event.\n")
                     return False
-            elif key == "WS Mode": 
-                tval = tval.strip()
-                if tval not in basicdata.wsmodes: 
-                    self.messageprint(tval+" is an invalid WS Mode.\n")
-                    return False
             elif key == "Additional Parameters": 
                 tval = tval.split(',')
                 for i,item in list(enumerate(tval)): tval[i] = item.strip()
                 tval = [i for i in tval if i != ""] # clearing empty entries
-            elif key == "Steps": 
-                if tval < 0: 
-                    self.messageprint(key+" must be a positive value.\n")
-                    return False
-            elif key == "Monitors": 
-                tval = tval.split(',')
-                for i,item in list(enumerate(tval)): tval[i] = item.strip()
-                tval = [i for i in tval if i != ""]
-                if "Monitor Max" in list(outdict.keys()): 
-                    if len(tval) != len(outdict["Monitor Max"]): 
-                        self.messageprint("Monitors should have the same number of entries as Monitor Max.\n")
-                        return False
-                if "Monitor Min" in list(outdict.keys()):
-                    if len(tval) != len(outdict["Monitor Min"]): 
-                        self.messageprint("Monitors should have the same number of entries as Monitor Min.\n")
-                        return False
-            elif (key == "Monitor Min") or (key == "Monitor Max"):
-                tval = tval.split(',')
-                for i,item in list(enumerate(tval)): tval[i] = item.strip()
-                tval = [i for i in tval if i != ""]
-                for i, item in enumerate(tval): 
-                    tf2, tval[i] = basicfuncs.checktype(item,float)
-                    if tf2 is False: 
-                        self.messageprint("One value in "+key+" is not of appropriate data type "+str(float)+".\n")
-                        return False
-                if key == "Monitor Min": 
-                    if "Monitor Max" in list(outdict.keys()): 
-                        if len(tval) != len(outdict["Monitor Max"]): 
-                            self.messageprint("Monitor Min should have the same number of entries as Monitor Max.\n")
-                            return False
-                        for i,item in enumerate(tval):
-                            if item > outdict["Monitor Max"][i]: 
-                                self.messageprint("Monitor Min should be smaller than Monitor Max.\n")
-                                return False
-                    if "Monitors" in list(outdict.keys()):
-                        if len(tval) != len(outdict["Monitors"]): 
-                            self.messageprint("Monitor Min should have the same number of entries as Monitors.\n")
-                            return False
-                elif key == "Monitor Max": 
-                    if "Monitor Min" in list(outdict.keys()): 
-                        if len(tval) != len(outdict["Monitor Min"]): 
-                            self.messageprint("Monitor Max should have the same number of entries as Monitor Min.\n")
-                            return False
-                        for i,item in enumerate(tval):
-                            if item < outdict["Monitor Min"][i]: 
-                                self.messageprint("Monitor Min should be smaller than Monitor Max.\n")
-                                return False
-                    if "Monitors" in list(outdict.keys()):
-                        if len(tval) != len(outdict["Monitors"]): 
-                            self.messageprint("Monitor Max should have the same number of entries as Monitors.\n")
-                            return False
             elif key == "Save Directory": 
                 if os.path.isdir(tval) is False: 
                     self.messageprint(tval+" is not a directory.\n")
                     return False
-            elif key == "Out Limit": 
-                if "In Limit" in list(outdict.keys()): 
-                    if tval > outdict["In Limit"]: 
-                        self.messageprint("Out Limit should be smaller than In Limit.\n")
-                        return False        
-            elif key == "In Limit": 
-                if "Out Limit" in list(outdict.keys()): 
-                    if tval < outdict["Out Limit"]: 
-                        self.messageprint("Out Limit should be smaller than In Limit.\n")
-                        return False
             outdict[key] = tval
         return outdict
-
-    def loadsetp(self,frame011,frame10): 
-        """Function for the Upload button. 
-        Executes necessary actions to upload data from a JSON to the program & GUI. 
-        Confirms entries are appropriate.
-        """
-        filepath = self.entries['Setup Parameters'].get().strip() # getting the data from the uploaded file.
-        if filepath == "": 
-            self.messageprint("Please add the path to a Setup Parameters file before pressing upload.\n")
-            return
-        else: 
-            try: 
-                with open(filepath) as json_file:
-                    tempinput = json.load(json_file)
-            except: 
-                self.messageprint("This file is not valid. Please try again.\n")
-                return
-            # start parsing the data
-            for ignorekey in basicdata.ignorekeys: # skipping the additional keys in Setup Params
-                if ignorekey in list(tempinput.keys()): 
-                    del tempinput[ignorekey]
-            cinkeys = list(tempinput.keys())
-            # execute all of the checks
-            for key in cinkeys: 
-                if key not in self.entries.keys(): # check that there are no unwanted additions to JSON
-                    self.messageprint("There is an unrecognized key in the JSON file.\n")
-                    return
-                # clear what's present
-                if (key == "Wire") or (key == "Event") or (key == "WS Mode"):
-                    self.entries[key].set('')
-                else:
-                    self.entries[key].delete(0,tk.END)
-                # replace with set value
-                if (tempinput[key] == "") or (tempinput[key] == []): 
-                    pass
-                else: 
-                    errorcheck = self.checkentriescorrect({key: tempinput[key]}) # a check that the value is compatible
-                    if errorcheck != False: 
-                        if (key == "Wire") or (key == "Event") or (key == "WS Mode"): # comboboxes
-                            self.entries[key].set(tempinput[key])
-                        else: # entries
-                            self.entries[key].insert(0,tempinput[key])
-                    else: 
-                        if (key == "Steps"): 
-                            self.entries[key].insert(0,"12700")
-                            self.messageprint(key+" has been restored to default.\n")
-                        elif (key == "WS Mode"): 
-                            self.entries[key].set("constant")
-                            self.messageprint(key+" has been restored to default.\n")
-            # initate the actions that happen after Wire is selected
-            wire = self.entries["Wire"].get().strip()
-            if wire in list(basicdata.pdict.keys()): # if a wire was selected with the json input
-                self.readbackpopup(wire,frame011)
-                self.plotinit(wire,frame10)
-                if "Out Limit" not in cinkeys: 
-                    self.changelims("Out Limit",wire)
-                if "In Limit" not in cinkeys: 
-                    self.changelims("In Limit",wire)
-            return
 
     def lockentries(self,statestr,entrykeys,buttonkeys): 
         """Enable and disable buttons and entry widgets in the Tkinter GUI."""
@@ -629,40 +380,32 @@ class WireScanApp(tk.Tk):
                 self.messageprint(item+" is a required value.\n")
                 self.lockentries("enabled",basicdata.lockedentries,basicdata.lockedbuttons)
                 return
-        # check that the wire is in an ok position
-        temppos = float(self.readbacks[basicdata.pdict[self.setpout["Wire"]][0]].get())
-        if temppos <= self.setpout["Out Limit"]: 
-            self.setpout["Direction"] = 0 # 0 for going in, 1 for going out
-        elif temppos >= self.setpout["In Limit"]: 
-            self.setpout["Direction"] = 1
-        else: 
-            self.messageprint(basicdata.pdict[self.setpout["Wire"]][0]+" is not outside In/Out Limit.\n")
-            self.lockentries("enabled",basicdata.lockedentries,basicdata.lockedbuttons)
-            return
         # add new frame with additional readbacks
         self.addparampopup(frame14,self.setpout["Additional Parameters"])              
         
+        print(self.setpout)
+
         # things that doesn't need to be saved in setup parameters (some still are) but needs to be accessible by scan
         self.setpout["Timestamp"] = round(time.time()) # choose unix time stamp around now 
         # make directory
-        savepath = os.path.join(self.setpout["Save Directory"],str(self.setpout["Timestamp"])+"_"+self.setpout["Wire"]).replace("\\","/")
+        savepath = os.path.join(self.setpout["Save Directory"],str(self.setpout["Timestamp"])+"_"+self.setpout["BLD"]).replace("\\","/")
         if not os.path.exists(savepath): 
             os.makedirs(savepath)
-            self.setpout["WS Directory"] = savepath
+            self.setpout["BLD Directory"] = savepath
         else: 
             self.messageprint("Folder for data unable to be created.\n")
             self.lockentries("enabled",basicdata.lockedentries,basicdata.lockedbuttons)
             return
-        basicfuncs.dicttojson(self.setpout,os.path.join(self.setpout["WS Directory"],"_".join([str(self.setpout["Timestamp"]),self.setpout["Wire"],"SetupParameters.json"])))
+        basicfuncs.dicttojson(self.setpout,os.path.join(self.setpout["BLD Directory"],"_".join([str(self.setpout["Timestamp"]),self.setpout["BLD"],"SetupParameters.json"])))
         # make dict of tags
         tagdict, i = {}, 1
-        for device in basicdata.pdict[self.setpout['Wire']]+basicdata.sdict[self.setpout['Wire']]+self.setpout['Additional Parameters']:
+        for device in basicdata.allparams[self.setpout['BLD']]+basicdata.sdict[self.setpout['BLD']]+self.setpout['Additional Parameters']:
             tagdict[i]=device
             i=i+1
         self.setpout["Tags"] = tagdict
 
         # collect metadata 
-        self.metad = {key:self.setpout[key] for key in ['Event', 'User Comment','Timestamp','WS Directory','Direction','Tags']}
+        self.metad = {key:self.setpout[key] for key in ['Event', 'User Comment','Timestamp','BLD Directory','Tags']}
         if self.setpout["Event"] == "0A": 
             params = ["L:SOURCE.READING","L:D7TOR.READING","L:TCHTON.READING","L:TCHTOF.READING","L:BSTUDY.READING"]
         else: 
@@ -677,7 +420,7 @@ class WireScanApp(tk.Tk):
             self.metad["Pulse Length"] = m[3]-m[2]
             self.metad["Frequency"] = m[4]
         self.metad["Abort"] = False
-        basicfuncs.dicttojson(self.metad,os.path.join(self.setpout["WS Directory"],"_".join([str(self.setpout["Timestamp"]),self.setpout["Wire"],"Metadata.json"])))
+        basicfuncs.dicttojson(self.metad,os.path.join(self.setpout["BLD Directory"],"_".join([str(self.setpout["Timestamp"]),self.setpout["BLD"],"Metadata.json"])))
         
         # start wirescan 
         self.plot_thread = "liveplot" 
@@ -687,7 +430,7 @@ class WireScanApp(tk.Tk):
         if self.plot_thread in self.acsyscontrol.get_list_of_threads(): 
             self.acsyscontrol.end_any_thread(self.plot_thread)
         print("Starting liveplot")
-        self.acsyscontrol.start_liveplot_thread(self.plot_thread,self.scan_thread,self.setpout["Wire"],self.plotobjects1)
+        self.acsyscontrol.start_liveplot_thread(self.plot_thread,self.scan_thread,self.setpout["BLD"],self.plotobjects1) 
 
     def abortbutton(self): 
         """Abort an ongoing scan."""
@@ -698,69 +441,15 @@ class WireScanApp(tk.Tk):
                 self.wiresout() # think more about this
                 # record that an abort occurred by editing the metadata file
                 self.metad["Abort"] = True
-                basicfuncs.dicttojson(self.metad,os.path.join(self.setpout["WS Directory"],"_".join([str(self.setpout["Timestamp"]),self.setpout["Wire"],"Metadata.json"])))
+                basicfuncs.dicttojson(self.metad,os.path.join(self.setpout["BLD Directory"],"_".join([str(self.setpout["Timestamp"]),self.setpout["BLD"],"Metadata.json"])))
             else: 
                 self.messageprint("No scan to abort.\n")
         except AttributeError: 
             self.messageprint("No scan to abort.\n") 
 
-    def wiresout(self):
-        """Issue setting to move wire to the out position."""
-        if self.entries["Wire"].get().strip() in basicdata.pdict.keys():
-            try: 
-                self.acsyscontrol.setparam(basicdata.pdict[self.entries["Wire"].get().strip()][0],-12700)
-                self.messageprint("Out setting issued to "+basicdata.pdict[self.entries["Wire"].get().strip()][0]+".\n")
-            except ValueError:
-                self.messageprint("Invalid Kerberos realm.\n") 
-        else: 
-            self.messageprint("No wire selected, cannot pull wire out.\n")
-        
-class Adv_Window(tk.Toplevel): 
-    def __init__(self,master):
-        tk.Toplevel.__init__(self,master)
-        self.title("Advanced Settings")
-        self.protocol('WM_DELETE_WINDOW', self.done_adv)
-        self.create_widgets_in_advwindow(master) 
+    def stopbutton(self): 
+        pass
 
-    def create_widgets_in_advwindow(self,master):
-        # setup frame
-        frameA = ttk.LabelFrame(self,borderwidth=5,relief="solid",labelanchor="nw",text="Advanced Settings")
-        frameA.grid(column=0,row=0,columnspan=1,pady=1,sticky="new")
-
-        # setup contents
-        textA = ["Additional Parameters","Steps","User Comment","WS Mode","Monitors","Monitor Min","Monitor Max"]
-        for i, text in enumerate(textA):
-            label = ttk.Label(frameA, text=text)
-            label.grid(column=0, row=i, sticky='w', padx=5, pady=5)
-            ToolTip(label,basicdata.tooltips[text])
-        entryA0 = ttk.Entry(frameA)
-        master.entries[textA[0]] = entryA0
-        entryA0.grid(column=1, row=0, sticky='e', padx=5, pady=2)
-        entryA1 = ttk.Entry(frameA)
-        master.entries[textA[1]] = entryA1
-        entryA1.insert(0,"12700")
-        entryA1.grid(column=1, row=1, sticky='e', padx=5, pady=2)
-        entryA2 = ttk.Entry(frameA)
-        master.entries[textA[2]] = entryA2
-        entryA2.grid(column=1, row=2, sticky='e', padx=5, pady=2)
-        comboA3 = ttk.Combobox(frameA,state="readonly",values=basicdata.wsmodes,width=17)
-        master.entries[textA[3]] = comboA3
-        comboA3.set("constant")
-        comboA3.grid(column=1, row=3, sticky='s', padx=2, pady=2)
-        entryA4 = ttk.Entry(frameA)
-        master.entries[textA[4]] = entryA4
-        entryA4.grid(column=1, row=4, sticky='e', padx=5, pady=2)
-        entryA5 = ttk.Entry(frameA)
-        master.entries[textA[5]] = entryA5
-        entryA5.grid(column=1, row=5, sticky='e', padx=5, pady=2)
-        entryA6 = ttk.Entry(frameA)
-        master.entries[textA[6]] = entryA6
-        entryA6.grid(column=1, row=6, sticky='e', padx=5, pady=2)
-
-    def done_adv(self): 
-        """Actions when window is complete."""
-        self.grab_release() # release focus before withdrawing
-        self.withdraw()
 
 class ToolTip(): 
     """Show small description popups when hovering over specific labels."""
