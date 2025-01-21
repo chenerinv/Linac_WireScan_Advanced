@@ -123,12 +123,9 @@ class WireScanApp(tk.Tk):
         start_button = ttk.Button(frame02, text="Start", command= lambda: self.startbutton(frame03))
         start_button.grid(column=0, row=1, columnspan=1, padx=1, pady=1)
         self.buttons["Start"] = start_button
-        stop_button = ttk.Button(frame02, text="Stop", command= lambda: self.stopbutton())
-        stop_button.grid(column=1, row=1, columnspan=1, padx=1, pady=1)
-        self.buttons["Stop"] = stop_button
-        abort_button = ttk.Button(frame02, text="Abort", command=self.abortbutton)
-        abort_button.grid(column=2, row=1, columnspan=1, padx=1, pady=1)
-        self.buttons["Abort"] = abort_button
+        abort_button = ttk.Button(frame02, text="Stop", command=self.abortbutton)
+        abort_button.grid(column=1, row=1, columnspan=1, padx=1, pady=1)
+        self.buttons["Stop"] = abort_button
 
     def create_widgets_in_tab3(self):
         # create subframes in tab3
@@ -225,7 +222,7 @@ class WireScanApp(tk.Tk):
             plotobj["Canvas"][key].get_tk_widget().pack(expand=1,fill="both")
             plotobj["Ax"][key] = plotobj["Fig"][key].add_subplot(111)
             if value == 0: 
-                plotobj["Ax"][key].set_xlabel("Trombone phase (deg@201 MHz)",fontsize=9)
+                plotobj["Ax"][key].set_xlabel("Trombone Phase (deg@201 MHz)",fontsize=9)
                 plotobj["Ax"][key].set_ylabel("EMT Signal (V)",fontsize=9)
             else: 
                 plotobj["Ax"][key].set_xlabel(key,fontsize=9)
@@ -419,7 +416,6 @@ class WireScanApp(tk.Tk):
         if len(params) == 5: 
             self.metad["Pulse Length"] = m[3]-m[2]
             self.metad["Frequency"] = m[4]
-        self.metad["Abort"] = False
         basicfuncs.dicttojson(self.metad,os.path.join(self.setpout["BLD Directory"],"_".join([str(self.setpout["Timestamp"]),self.setpout["BLD"],"Metadata.json"])))
         
         # start wirescan 
@@ -437,19 +433,11 @@ class WireScanApp(tk.Tk):
         try: 
             if self.scan_thread in self.acsyscontrol.get_list_of_threads(): # kill existing thread if present
                 self.acsyscontrol.end_any_thread(self.scan_thread)
-                self.messageprint("Scan aborted by user.\n") 
-                self.wiresout() # think more about this
-                # record that an abort occurred by editing the metadata file
-                self.metad["Abort"] = True
-                basicfuncs.dicttojson(self.metad,os.path.join(self.setpout["BLD Directory"],"_".join([str(self.setpout["Timestamp"]),self.setpout["BLD"],"Metadata.json"])))
+                self.messageprint("Scan ended by user.\n") 
             else: 
-                self.messageprint("No scan to abort.\n")
+                self.messageprint("No scan to end.\n")
         except AttributeError: 
-            self.messageprint("No scan to abort.\n") 
-
-    def stopbutton(self): 
-        pass
-
+            self.messageprint("AttributeError: No scan to end.\n") 
 
 class ToolTip(): 
     """Show small description popups when hovering over specific labels."""

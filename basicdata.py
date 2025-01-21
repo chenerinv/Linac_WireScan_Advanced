@@ -1,11 +1,11 @@
 pdict = { # RF position
-    "D03": ["L:DDMOT4"], 
+    "D03": ["L:DDMOT3"], 
 }
 sdict = { # signal device
     "D03": ["L:D03BDS"],
 }
 allparams = {
-    "D03": ["L:DDMOT4", "L:D03BDS", "L:D03BDM", "L:D03WHV", "L:D03HV1", "L:D03HV2", "L:62FT07", "L:D03WHI", "L:D03HI1", "L:D03HI2"],
+    "D03": ["L:DDMOT3", "L:D03BDS", "L:D03BDM", "L:D03WHV", "L:D03HV1", "L:D03HV2", "L:62FT07", "L:D03WHI", "L:D03HI1", "L:D03HI2","L:C0PHAS", "L:L0PADJ","L:CVPHAS","L:LVPADJ"],
 }
 
 unitlist = ["deg", "V", "mm", "kV", "kV", "kV", "us", "mA", "mA", "mA"]
@@ -72,6 +72,6 @@ checkcorrect = {
 
 requiredkeys = ["BLD", "Event", "Save Directory"]
 skippedkeys = ["Messages", "Setup Parameters", "Help1", "Help2", "Help3"]
-ignorekeys = ["Timestamp","WS Directory","Direction","Source","L:D7TOR","Pulse Length", "Frequency","Tags"]
+ignorekeys = ["Timestamp","BLD Directory","Direction","Source","L:D7TOR","Pulse Length", "Frequency","Tags"]
 lockedentries = ["BLD","Event","Save Directory","User Comment","Additional Parameters"]
 lockedbuttons = ["Browse2","Start"] 

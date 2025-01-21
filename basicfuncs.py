@@ -122,5 +122,21 @@ def rawtowires(indict,modstr):
     checklengths() # need to call again to check that the last set rounded off right.
     return outdict
 
+def avgtag(indict,tagkey): 
+    """."""
+    data = []
+
+    for i, tag in enumerate(indict["tags"]): 
+        if str(tag) == str(tagkey): 
+            data.append(indict["data"][i]) 
+
+    if len(data) >= 1: 
+        avg = sum(data)/len(data)
+        length = len(data)
+        std = np.std(np.array(data))
+        return avg, std, length
+    else: 
+        return False,False,False
+
 if __name__ == "__main__":
     checktype()
