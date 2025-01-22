@@ -174,7 +174,7 @@ class acsyscontrol:
             # analyze data 
             # try: 
             if self.thread_dict[thread_name]['outdict']['tags'] != []: # skip analysis if the dict is empty
-                self.dataanalysis.endscanproc(procdata,coutput)
+                self.dataanalysis.endscanproc(procdata,coutput,xlim=coutput["xlim"],ylim=coutput["ylim"])
             messageprint("Analysis successful. Data saved at "+coutput["BLD Directory"]+"\n")
             # except: 
             #     messageprint("There was an issue with the analysis.\n")

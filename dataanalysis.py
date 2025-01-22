@@ -53,14 +53,14 @@ class dataanalysis:
                 widths, heights, left_ips, right_ips = peak_widths(t_df['L:D03BDS'], peaks, rel_height=0.6)
                 fwhm = t_df['L:DDMOT3'].iloc[round(right_ips[0])]- t_df['L:DDMOT3'].iloc[round(left_ips[0])]
 
-                fitstats["FWHM"] = fwhm
-                fitstats["peaks"] = peaks
-                fitstats["widths"] = widths
-                fitstats["heights"] = heights
-                fitstats["left_ips"] = left_ips
-                fitstats["right_ips"] = right_ips
+                fitstats["FWHM_raw"] = fwhm
+                fitstats["peaks"] = peaks.tolist()
+                fitstats["widths"] = widths.tolist()
+                fitstats["heights"] = heights.tolist()
+                fitstats["left_ips"] = left_ips.tolist()
+                fitstats["right_ips"] = right_ips.tolist()
             except: 
-                fitstats["FWHM"] = None
+                fitstats["FWHM_raw"] = None
                 fitstats["peaks"] = None
                 fitstats["widths"] = None
                 fitstats["heights"] = None
@@ -69,6 +69,7 @@ class dataanalysis:
 
             # gaussian fitting & basic plotting
             rms = np.std(t_df['L:D03BDS'].iloc[:10])
+            fitstats["rms"] = rms
             x0 = np.zeros(len(t_df))
             sigma = np.zeros(len(t_df))
             x0err = np.zeros(len(t_df))
@@ -79,15 +80,32 @@ class dataanalysis:
             fig2 = plt.figure(figsize=(8,6))
             ax = plt.axes()
             props = dict(boxstyle='round', facecolor='white', alpha=0.8)
-            errors = np.ones(len(t_df['L:D03BDS']))*rms
-            (H, A, x0, sigma),pcov = gauss_fit(t_df['L:DDMOT3'], t_df['L:D03BDS'], errors)
-            FWHM = 2.35482 * sigma
-            ps = 1./201.5e6 * FWHM/360. * 1e12
-            integral = A*sigma*np.sqrt(2*np.pi)
-            print(FWHM, abs(integral))
-            
-            x0err = np.sqrt(pcov[2][2])
-            sigmaerr = np.sqrt(pcov[3][3])
+            try: 
+                errors = np.ones(len(t_df['L:D03BDS']))*rms
+                (H, A, x0, sigma),pcov = gauss_fit(t_df['L:DDMOT3'], t_df['L:D03BDS'], errors)
+                FWHM = 2.35482 * sigma
+                ps = 1./201.5e6 * FWHM/360. * 1e12
+                integral = A*sigma*np.sqrt(2*np.pi)
+                x0err = np.sqrt(pcov[2][2])
+                sigmaerr = np.sqrt(pcov[3][3])
+                fitstats["FWHM_ps"] = ps
+                fitstats["FWHM_Gauss"] = FWHM
+                fitstats["GaussFit"] = [H,A,x0,sigma]
+                fitstats["pcov"] = pcov.tolist()
+                fitstats["x0err"] = x0err
+                fitstats["sigmaerr"] = sigmaerr
+                fitstats["integral"] = abs(integral)
+            except: 
+                fitstats["FWHM_ps"] = None
+                fitstats["FWHM_Gauss"] = None
+                fitstats["GaussFit"] = None
+                fitstats["pcov"] = None
+                fitstats["x0err"] = None
+                fitstats["sigmaerr"] = None
+                fitstats["integral"] = None
+
+            basicfuncs.dicttojson(fitstats,os.path.join(coutput["BLD Directory"],"_".join([str(coutput["Timestamp"]),coutput["BLD"],"FitStats.json"])))
+
             textstr = '\n'.join((
                     r'$\mu=%.2f\pm%.2f$' % (x0, np.sqrt(pcov[2][2]),),
                     r'$\sigma=%.2f\pm%.2f$' % (sigma, np.sqrt(pcov[3][3]),),
@@ -97,8 +115,8 @@ class dataanalysis:
             plt.plot(t_df['L:DDMOT3'], gauss(t_df['L:DDMOT3'], *gauss_fit(t_df['L:DDMOT3'], 
                         t_df['L:D03BDS'], errors)[0]), '-',color='r', label='fit')
             plt.grid(True)
-            plt.legend(loc="upper right")
-            ax.text(0.05, 0.95, textstr, color='k', fontsize='medium', verticalalignment='top', bbox=props,transform=ax.transAxes)
+            plt.legend(loc="upper left")
+            ax.text(0.75, 0.95, textstr, color='k', fontsize='medium', verticalalignment='top', bbox=props,transform=ax.transAxes)
 
             plt.ylabel('EMT signal (V)',fontsize='x-large')
             plt.xlabel('Trombone phase (deg@201 MHz)',fontsize='x-large')

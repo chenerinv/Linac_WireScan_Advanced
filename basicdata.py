@@ -27,7 +27,9 @@ tooltips = {
     "WS Mode": "[Not functional]. Required. Modes of WS motion control.",
     "Monitors": "[Not functional] Separate AcNet parameters with commas to monitor these devices.",
     "Monitor Min": "[Not functional] Minimum values for the monitors, separated by comma and indexed matching 'Monitors.'",
-    "Monitor Max": "[Not functional] Maximum values for the monitors, separated by comma and indexed matching 'Monitors.'"
+    "Monitor Max": "[Not functional] Maximum values for the monitors, separated by comma and indexed matching 'Monitors.'",
+    "xlim": "Optional. Set a fixed range for plot export. Input a range separated by a comma, e.g. 20, 50",
+    "ylim": "Optional. Set a fixed range for plot export. Input a range separated by a comma, e.g. 20, 50",
 }
 
 helpstrings = {
@@ -67,11 +69,13 @@ checkcorrect = {
     "Monitors": str,
     "Monitor Min": str,
     "Monitor Max": str,
-    "Save Directory": str
+    "Save Directory": str,
+    "xlim": str,
+    "ylim": str,
 }
 
 requiredkeys = ["BLD", "Event", "Save Directory"]
 skippedkeys = ["Messages", "Setup Parameters", "Help1", "Help2", "Help3"]
 ignorekeys = ["Timestamp","BLD Directory","Direction","Source","L:D7TOR","Pulse Length", "Frequency","Tags"]
-lockedentries = ["BLD","Event","Save Directory","User Comment","Additional Parameters"]
+lockedentries = ["BLD","Event","Save Directory","User Comment","Additional Parameters","xlim","ylim"]
 lockedbuttons = ["Browse2","Start"] 

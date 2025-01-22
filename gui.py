@@ -78,7 +78,9 @@ class WireScanApp(tk.Tk):
         frame010 = ttk.LabelFrame(frame01,borderwidth=5,relief="solid",labelanchor="nw",text="BLD Selection")
         frame010.grid(column=0,row=0,columnspan=1,pady=1,sticky="w")
         frame011 = ttk.LabelFrame(frame01,borderwidth=5,relief="solid",labelanchor="n",text="Readbacks")
-        frame011.grid(column=1,row=0,columnspan=1,pady=1,sticky="n") # nested in frame 01, so must be made here not readbackpopup()
+        frame011.grid(column=1,row=0,columnspan=1,rowspan=2,pady=1,sticky="n") # nested in frame 01, so must be made here not readbackpopup()
+        frame012 = ttk.LabelFrame(frame01,borderwidth=5,relief="solid",labelanchor="nw",text="Plot Settings")
+        frame012.grid(column=0,row=1,columnspan=1,pady=1,sticky="w")
 
         # frame010
         labels = ["BLD","User Comment","Event","Additional Parameters"]
@@ -105,6 +107,19 @@ class WireScanApp(tk.Tk):
 
         # frame011 (Readbacks), frame10 (Plots)
             # blank unless selectedwire activates
+
+        # frame 012
+        labels2 = ["xlim","ylim"]
+        for i,text in enumerate(labels2):
+            label = ttk.Label(frame012,text=text)
+            label.grid(column=i*2,row=0,padx=2,pady=2)
+            ToolTip(label,basicdata.tooltips[text])
+        entry012_0 = ttk.Entry(frame012,width=8)
+        entry012_0.grid(column=1,row=0,padx=2,pady=2)
+        self.entries[labels2[0]] = entry012_0
+        entry012_1 = ttk.Entry(frame012,width=8)
+        entry012_1.grid(column=3,row=0,padx=2,pady=2)
+        self.entries[labels2[1]] = entry012_1
 
         # frame03 (Additional Parameters)
             # blank unless scan is started
@@ -342,6 +357,23 @@ class WireScanApp(tk.Tk):
                 if os.path.isdir(tval) is False: 
                     self.messageprint(tval+" is not a directory.\n")
                     return False
+            elif key in ["xlim","ylim"]: 
+                tval = tval.split(',')
+                if tval[0].strip() == "": 
+                    tval = [None,None]
+                else: 
+                    try: 
+                        for i,item in list(enumerate(tval)): tval[i] = float(item.strip())
+                    except: 
+                        self.messageprint(key+" are not of the correct type.")
+                        return False
+                    tval = [i for i in tval if i != ""] # clearing empty entries 
+                    if len(tval) != 2: 
+                        self.messageprint(key+" does not have the necessary two limits.")
+                        return False
+                    if tval[1] - tval[0] <= 0: 
+                        self.messageprint(key+" does not have a larger second value.")
+                        return False
             outdict[key] = tval
         return outdict
 
@@ -379,9 +411,6 @@ class WireScanApp(tk.Tk):
                 return
         # add new frame with additional readbacks
         self.addparampopup(frame14,self.setpout["Additional Parameters"])              
-        
-        print(self.setpout)
-
         # things that doesn't need to be saved in setup parameters (some still are) but needs to be accessible by scan
         self.setpout["Timestamp"] = round(time.time()) # choose unix time stamp around now 
         # make directory
