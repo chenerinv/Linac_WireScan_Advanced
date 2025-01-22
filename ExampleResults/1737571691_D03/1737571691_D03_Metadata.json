@@ -1,0 +1,27 @@
+{
+    "Event": "1D",
+    "User Comment": "testing final?",
+    "Timestamp": 1737571691,
+    "BLD Directory": "C:/Users/erinchen/Documents/VS/Git_Projects/Linac_WireScan_Advanced/datacollect/1737571691_D03",
+    "Tags": {
+        "1": "L:DDMOT3",
+        "2": "L:D03BDS",
+        "3": "L:D03BDM",
+        "4": "L:D03WHV",
+        "5": "L:D03HV1",
+        "6": "L:D03HV2",
+        "7": "L:62FT07",
+        "8": "L:D03WHI",
+        "9": "L:D03HI1",
+        "10": "L:D03HI2",
+        "11": "L:C0PHAS",
+        "12": "L:L0PADJ",
+        "13": "L:CVPHAS",
+        "14": "L:LVPADJ",
+        "15": "L:D03BDS",
+        "16": "L:V5QSET.SETTING",
+        "17": "L:V5SQ"
+    },
+    "Source": "A",
+    "L:D7TOR": -0.0031063109054229737
+}

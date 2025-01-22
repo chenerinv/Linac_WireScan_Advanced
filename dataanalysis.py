@@ -41,8 +41,9 @@ class dataanalysis:
             xsorted = sorted(procdata[x])
             
             # temp for testing
-            xsorted = np.linspace(-50,50,200)
-            ysorted = np.multiply(np.array(gauss(xsorted,0,3,0,8)), np.array(np.random.normal(1,1.1,200)))
+            # xsorted = np.linspace(-50,50,200)
+            # ysorted = np.multiply(np.array(gauss(xsorted,0,3,0,8)), np.array(np.random.normal(1,1.1,200)))
+            
             xsorted = xsorted.tolist()
             ysorted = ysorted.tolist()
 

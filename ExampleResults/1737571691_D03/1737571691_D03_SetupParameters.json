@@ -1,0 +1,17 @@
+{
+    "BLD": "D03",
+    "User Comment": "testing final?",
+    "Event": "1D",
+    "Additional Parameters": "L:V5QSET.SETTING, L:V5SQ",
+    "xlim": [
+        -50.0,
+        50.0
+    ],
+    "ylim": [
+        -1.0,
+        10.0
+    ],
+    "Save Directory": "C:/Users/erinchen/Documents/VS/Git_Projects/Linac_WireScan_Advanced/datacollect",
+    "Timestamp": 1737571691,
+    "BLD Directory": "C:/Users/erinchen/Documents/VS/Git_Projects/Linac_WireScan_Advanced/datacollect/1737571691_D03"
+}

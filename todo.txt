@@ -1,7 +1,0 @@
-add optional parameter data collection
-
-make displayed readback more comprehensive
-
-fix readbackpopup
-
-merge abort and stop button; they do the same thing. no need for a pause button.

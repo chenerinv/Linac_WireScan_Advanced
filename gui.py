@@ -17,8 +17,8 @@ class WireScanApp(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Bunch Length Detector Data Collector")
-        self.geometry("850x365")
-        self.minsize(850,365)
+        self.geometry("850x430")
+        self.minsize(850,430)
         self.entries = {} # tk entries
         self.buttons = {} # tk buttons
         self.setpout = {} # dictionary with setup data
@@ -55,6 +55,8 @@ class WireScanApp(tk.Tk):
     
     def create_widgets_in_tab1(self): 
         # create subframes in tab1
+        frame00 = ttk.LabelFrame(self.tab1,borderwidth=5,relief="solid",labelanchor="nw",text="Quick Setup")
+        frame00.grid(column=0,row=0,columnspan=1,pady=1,sticky="nw")
         frame01 = ttk.Frame(self.tab1)
         frame01.grid(column=0,row=1,columnspan=1,pady=1,sticky="w")
         frame02 = ttk.LabelFrame(self.tab1,borderwidth=5,relief="solid",labelanchor="nw",text="Control")
@@ -81,6 +83,21 @@ class WireScanApp(tk.Tk):
         frame011.grid(column=1,row=0,columnspan=1,rowspan=2,pady=1,sticky="n") # nested in frame 01, so must be made here not readbackpopup()
         frame012 = ttk.LabelFrame(frame01,borderwidth=5,relief="solid",labelanchor="nw",text="Plot Settings")
         frame012.grid(column=0,row=1,columnspan=1,pady=1,sticky="w")
+
+        # frame00
+        text00 = "Setup Parameters"
+        label00 = ttk.Label(frame00, text=text00)
+        label00.grid(column=0, row=0, sticky='w', padx=5, pady=5)
+        ToolTip(label00,basicdata.tooltips[text00])
+        entry00 = ttk.Entry(frame00)
+        entry00.grid(column=1, row=0, sticky='ew', padx=5, pady=2)
+        self.entries[text00] = entry00
+        browse_button_00 = ttk.Button(frame00, text='Browse', command=lambda e=entry00, t=text00: self.browse(e,t))
+        browse_button_00.grid(column=2, row=0, padx=5, pady=2)
+        self.buttons["Browse1"] = browse_button_00
+        upload_button = ttk.Button(frame00, text='Upload', command=lambda: self.loadsetp(frame011,frame10)) #TODO remove & integrate into browse1
+        upload_button.grid(column=3, row=0, sticky='e', padx=5, pady=2)
+        self.buttons["Upload"] = upload_button
 
         # frame010
         labels = ["BLD","User Comment","Event","Additional Parameters"]
@@ -192,7 +209,13 @@ class WireScanApp(tk.Tk):
 
     def browse(self, entry_widget, text):
         """Browse for a file."""
-        if text == 'Save Directory':
+        if text == 'Setup Parameters':
+            filename = filedialog.askopenfilename(filetypes=[("JSON files", "*.json")])
+            if filename:
+                entry_widget.delete(0, tk.END)
+                entry_widget.insert(0, filename)
+                self.workdir = os.path.dirname(filename)
+        elif text == 'Save Directory':
             directory = filedialog.askdirectory()
             if directory:
                 entry_widget.delete(0, tk.END)
@@ -376,6 +399,56 @@ class WireScanApp(tk.Tk):
                         return False
             outdict[key] = tval
         return outdict
+
+    def loadsetp(self,frame011,frame10): 
+        """Function for the Upload button. 
+        Executes necessary actions to upload data from a JSON to the program & GUI. 
+        Confirms entries are appropriate.
+        """
+        filepath = self.entries['Setup Parameters'].get().strip() # getting the data from the uploaded file.
+        if filepath == "": 
+            self.messageprint("Please add the path to a Setup Parameters file before pressing upload.\n")
+            return
+        else: 
+            try: 
+                with open(filepath) as json_file:
+                    tempinput = json.load(json_file)
+            except: 
+                self.messageprint("This file is not valid. Please try again.\n")
+                return
+            # start parsing the data
+            for ignorekey in basicdata.ignorekeys: # skipping the additional keys in Setup Params
+                if ignorekey in list(tempinput.keys()): 
+                    del tempinput[ignorekey]
+            cinkeys = list(tempinput.keys())
+            # execute all of the checks
+            for key in cinkeys: 
+                if key not in self.entries.keys(): # check that there are no unwanted additions to JSON
+                    self.messageprint("There is an unrecognized key in the JSON file.\n")
+                    return
+                # clear what's present
+                if (key == "BLD") or (key == "Event"):
+                    self.entries[key].set('')
+                else:
+                    self.entries[key].delete(0,tk.END)
+                # replace with set value
+                if (tempinput[key] == "") or (tempinput[key] == []) or (tempinput[key] == [None,None]): 
+                    pass
+                else: 
+                    if key in ["xlim", "ylim"]: 
+                        tempinput[key] = str(tempinput[key])[1:-1]
+                    errorcheck = self.checkentriescorrect({key: tempinput[key]}) # a check that the value is compatible
+                    if errorcheck != False: 
+                        if (key == "BLD") or (key == "Event"): # comboboxes
+                            self.entries[key].set(tempinput[key])
+                        else: # entries
+                            self.entries[key].insert(0,tempinput[key])
+            # initate the actions that happen after Wire is selected
+            wire = self.entries["BLD"].get().strip()
+            if wire in list(basicdata.pdict.keys()): # if a wire was selected with the json input
+                self.readbackpopup(wire,frame011)
+                self.plotinit(wire,frame10)
+            return
 
     def lockentries(self,statestr,entrykeys,buttonkeys): 
         """Enable and disable buttons and entry widgets in the Tkinter GUI."""
