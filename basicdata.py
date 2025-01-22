@@ -8,7 +8,7 @@ allparams = {
     "D03": ["L:DDMOT3", "L:D03BDS", "L:D03BDM", "L:D03WHV", "L:D03HV1", "L:D03HV2", "L:62FT07", "L:D03WHI", "L:D03HI1", "L:D03HI2","L:C0PHAS", "L:L0PADJ","L:CVPHAS","L:LVPADJ"],
 }
 
-unitlist = ["deg", "V", "mm", "kV", "kV", "kV", "us", "mA", "mA", "mA"]
+unitlist = ["deg", "V", "mm", "kV", "kV", "kV", "us", "mA", "mA", "mA", "deg", "deg", "deg", "deg"]
 
 outlimdict = {"D03": 0}
 inlimdict = {"D03": 100}

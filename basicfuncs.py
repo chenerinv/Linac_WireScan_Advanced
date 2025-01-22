@@ -138,5 +138,6 @@ def avgtag(indict,tagkey):
     else: 
         return False,False,False
 
+
 if __name__ == "__main__":
     checktype()
