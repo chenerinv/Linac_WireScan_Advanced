@@ -43,9 +43,8 @@ class dataanalysis:
             # temp for testing
             # xsorted = np.linspace(-50,50,200)
             # ysorted = np.multiply(np.array(gauss(xsorted,0,3,0,8)), np.array(np.random.normal(1,1.1,200)))
-            
-            xsorted = xsorted.tolist()
-            ysorted = ysorted.tolist()
+            # xsorted = xsorted.tolist()
+            # ysorted = ysorted.tolist()
 
             # converting to pandas dataframe for Ralitsa's FWHM peakfinding code
             t_df = pd.DataFrame({x: xsorted, y: ysorted})
