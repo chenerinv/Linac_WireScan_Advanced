@@ -172,12 +172,12 @@ class acsyscontrol:
                 coutput["TagAvg"][coutput["Tags"][key]] = [avg, std, len]
             basicfuncs.dicttojson(coutput["TagAvg"],os.path.join(coutput["BLD Directory"],"_".join([str(coutput["Timestamp"]),coutput["BLD"],"TagAvgs.json"])))
             # analyze data 
-            # try: 
-            if self.thread_dict[thread_name]['outdict']['tags'] != []: # skip analysis if the dict is empty
-                self.dataanalysis.endscanproc(procdata,coutput,xlim=coutput["xlim"],ylim=coutput["ylim"])
-            messageprint("Analysis successful. Data saved at "+coutput["BLD Directory"]+"\n")
-            # except: 
-            #     messageprint("There was an issue with the analysis.\n")
+            try: 
+                if self.thread_dict[thread_name]['outdict']['tags'] != []: # skip analysis if the dict is empty
+                    self.dataanalysis.endscanproc(procdata,coutput,xlim=coutput["xlim"],ylim=coutput["ylim"])
+                messageprint("Analysis successful. Data saved at "+coutput["BLD Directory"]+"\n")
+            except: 
+                messageprint("There was an issue with the analysis.\n")
             # thread done, can be closed
             self.thread_dict[thread_name]['finally'].set()
             messageprint("Scan closed.\n")

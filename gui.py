@@ -535,6 +535,7 @@ class WireScanApp(tk.Tk):
         try: 
             if self.scan_thread in self.acsyscontrol.get_list_of_threads(): # kill existing thread if present
                 self.acsyscontrol.end_any_thread(self.scan_thread)
+                self.lockentries("enabled",basicdata.lockedentries,basicdata.lockedbuttons)
                 self.messageprint("Scan ended by user.\n") 
             else: 
                 self.messageprint("No scan to end.\n")
