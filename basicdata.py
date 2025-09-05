@@ -1,18 +1,24 @@
 pdict = { # RF position
-    "D03": ["L:DDMOT3"], 
+    "D01": ["L:D01PHS"],
+    "D03": ["L:D03PHS"], 
 }
 sdict = { # signal device
+    "D01": ["L:D01BDS"],
     "D03": ["L:D03BDS"],
 }
 allparams = {
-    "D03": ["L:DDMOT3", "L:D03BDS", "L:D03BDM", "L:D03WHV", "L:D03HV1", "L:D03HV2", "L:62FT07", "L:D03WHI", "L:D03HI1", "L:D03HI2","L:C0PHAS", "L:L0PADJ","L:CVPHAS","L:LVPADJ"],
+    "D01": ["L:D01PHS", "L:D01BDS", "L:D01BDM", "L:D01WHV", "L:D01HV1", "L:D01HV2", "L:62FT07", "L:D01WHI", "L:D01HI1", "L:D01HI2", "L:C0PHAS", "L:L0PADJ", "L:CVPHAS","L:LVPADJ","L:V5QSET","L:V5SQ"],
+    "D03": ["L:D03PHS", "L:D03BDS", "L:D03BDM", "L:D03WHV", "L:D03HV1", "L:D03HV2", "L:62FT07", "L:D03WHI", "L:D03HI1", "L:D03HI2", "L:C0PHAS", "L:L0PADJ", "L:CVPHAS","L:LVPADJ","L:V5QSET","L:V5SQ"],
 }
 
-unitlist = ["deg", "V", "mm", "kV", "kV", "kV", "us", "mA", "mA", "mA", "deg", "deg", "deg", "deg"]
+unitlist = ["deg", "V", "mm", "kV", "kV", "kV", "us", "mA", "mA", "mA", "deg", "deg", "deg", "deg","deg","deg"]
 
-outlimdict = {"D03": 0}
-inlimdict = {"D03": 100}
-ylims = {"D03": [-0.1,5]} 
+outlimdict = {"D01": 0,
+              "D03": 0}
+inlimdict = {"D01": 360,
+             "D03": 360}
+ylims = {"D01": [-0.1,5],
+         "D03": [-0.1,5]} 
 
 tooltips = {
     "Setup Parameters": "Optional. A quick way to set up a scan. Press Upload to load it in over current inputs.",

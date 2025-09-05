@@ -36,6 +36,7 @@ async def runscan(con,threadcontext,maindict,messageprint):
         # add acquisition requests
         for key in maindict['Tags'].keys():
             await dpm.add_entry(key,maindict['Tags'][key]+"@e,"+maindict['Event'])
+        await dpm.add_entry(0,"L:C0VPA@p,1H") # need this to stop it from lagging unbearably
 
         # start acquisition
         await dpm.start()

@@ -502,7 +502,7 @@ class WireScanApp(tk.Tk):
             tagdict[i]=device
             i=i+1
         self.setpout["Tags"] = tagdict
-
+        print(tagdict)
         # collect metadata 
         self.metad = {key:self.setpout[key] for key in ['Event', 'User Comment','Timestamp','BLD Directory','Tags']}
         if self.setpout["Event"] == "0A": 
