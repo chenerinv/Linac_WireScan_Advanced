@@ -1,2 +1,3 @@
-for key in "devicesave/devicelist.txt": 
-    print(key)
+g = "L:D01PHS"
+
+print(g[-3:])

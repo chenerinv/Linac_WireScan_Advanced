@@ -100,7 +100,7 @@ class WireScanApp(tk.Tk):
         self.buttons["Upload"] = upload_button
 
         # frame010
-        labels = ["BLD","User Comment","Event","Additional Parameters"]
+        labels = ["BLD","Phase Parameter","User Comment","Event","Additional Parameters"]
         for i, text in enumerate(labels):
             label = ttk.Label(frame010, text=text)
             if i<3: 
@@ -112,15 +112,22 @@ class WireScanApp(tk.Tk):
         combo010_0.grid(column=0, row=1, sticky='s', padx=2, pady=2)
         combo010_0.bind("<<ComboboxSelected>>", lambda event: self.selectedwire(frame011,frame10))
         self.entries[labels[0]] = combo010_0
+        
+        combo010_2 = ttk.Combobox(frame010,state="readonly",values=list(basicdata.rfpositionoptions),width=10) 
+        combo010_2.grid(column=1, row=1, sticky='s', padx=2, pady=2)
+        combo010_2.bind("<<ComboboxSelected>>", lambda event: self.selectedphase(frame011,frame10)) 
+        self.entries[labels[1]] = combo010_2
+        self.lockentries("disabled",["Phase Parameter"],[])
+
         entry010_0 = ttk.Entry(frame010,width=25)
-        entry010_0.grid(column=1, row=1, sticky='s', padx=2, pady=2)
-        self.entries[labels[1]] = entry010_0
+        entry010_0.grid(column=2, row=1, sticky='s', padx=2, pady=2)
+        self.entries[labels[2]] = entry010_0
         combo010_1 = ttk.Combobox(frame010,state="readonly",values=basicdata.events,width=3)
-        combo010_1.grid(column=2, row=1, sticky='s', padx=2, pady=2)
-        self.entries[labels[2]] = combo010_1
+        combo010_1.grid(column=0, row=4, sticky='s', padx=2, pady=2)
+        self.entries[labels[3]] = combo010_1
         entry010_1 = ttk.Entry(frame010,width=40)
-        entry010_1.grid(column=0,row=4, columnspan = 3,sticky="w",padx=2, pady=2)
-        self.entries[labels[3]] = entry010_1
+        entry010_1.grid(column=1,row=4, columnspan = 2,sticky="w",padx=2, pady=2)
+        self.entries[labels[4]] = entry010_1
 
         # frame011 (Readbacks), frame10 (Plots)
             # blank unless selectedwire activates
@@ -234,8 +241,18 @@ class WireScanApp(tk.Tk):
     def selectedwire(self,frame011,frame10): 
         """Initiates all changes upon selecting a wire: changing limits, initiates live readbacks, initializes plot setup."""
         value = self.entries["BLD"].get().strip() # could have used event.widget.get() if we passed event through lambda
+        self.lockentries("readonly",["Phase Parameter"],[])
+        self.entries["Phase Parameter"].set(basicdata.pdict[value])
         self.readbackpopup(value,frame011) #technically could get value in these, but it is easier to just pass it?
         self.plotinit(value,frame10)
+
+    def selectedphase(self,frame011,frame10): 
+        """Allows user to change the phase parameter."""
+        value = self.entries["BLD"].get().strip()
+        print(self.plotobjects1)
+        self.plotobjects1["Ax"].set_xlabel(self.entries["Phase Parameter"].get().strip(),fontsize=9)
+        self.readbackpopup(value,frame011)
+        # change the readbacks and the plot after selecting
 
     def plotinit(self,value,frame10): 
         '''Initializing axes of the live plot upon wire selection & deleting previous subplots.'''
@@ -250,26 +267,29 @@ class WireScanApp(tk.Tk):
         else: g = basicdata.pdict[value]
 
         for i,key in enumerate(g): 
-            plotobj["Frame"][key] = ttk.Frame(frame10)
-            plotobj["Frame"][key].grid(column=0,row=j,columnspan=1,pady=1,sticky="we")
+            plotobj["Frame"] = ttk.Frame(frame10)
+            plotobj["Frame"].grid(column=0,row=j,columnspan=1,pady=1,sticky="we")
             frame10.rowconfigure(j,weight=1)
             j = j+1
-            plotobj["Fig"][key] = Figure(dpi=100)
-            plotobj["Canvas"][key] = FigureCanvasTkAgg(plotobj["Fig"][key], master=plotobj["Frame"][key])
-            plotobj["Canvas"][key].draw()
-            plotobj["Canvas"][key].get_tk_widget().pack(expand=1,fill="both")
-            plotobj["Ax"][key] = plotobj["Fig"][key].add_subplot(111)
+            plotobj["Fig"] = Figure(dpi=100)
+            plotobj["Canvas"] = FigureCanvasTkAgg(plotobj["Fig"], master=plotobj["Frame"])
+            plotobj["Canvas"].draw()
+            plotobj["Canvas"].get_tk_widget().pack(expand=1,fill="both")
+            plotobj["Ax"] = plotobj["Fig"].add_subplot(111)
             if value == 0: 
-                plotobj["Ax"][key].set_xlabel("Trombone Phase (deg@201 MHz)",fontsize=9)
-                plotobj["Ax"][key].set_ylabel("EMT Signal (V)",fontsize=9)
+                if self.entries["Phase Parameter"][-3:] == "PHS":
+                    plotobj["Ax"].set_xlabel("Trombone Phase (deg@805 MHz)",fontsize=9)
+                else: 
+                    plotobj["Ax"].set_xlabel("Trombone Phase (deg@201 MHz)",fontsize=9)
+                plotobj["Ax"].set_ylabel("EMT Signal (V)",fontsize=9)
             else: 
-                plotobj["Ax"][key].set_xlabel(key,fontsize=9)
-                plotobj["Ax"][key].set_ylabel(basicdata.sdict[value][i],fontsize=9)
-            plotobj["Ax"][key].tick_params(axis='x',labelsize=8)
-            plotobj["Ax"][key].tick_params(axis='y',labelsize=8)
-            plotobj["ScatterObj"][key] = plotobj["Ax"][key].scatter([],[],color="tab:blue")
-            plotobj["Canvas"][key].draw()          
-            plotobj["Fig"][key].set_tight_layout(True) 
+                plotobj["Ax"].set_xlabel(self.entries["Phase Parameter"].get().strip(),fontsize=9)
+                plotobj["Ax"].set_ylabel(basicdata.sdict[value][i],fontsize=9)
+            plotobj["Ax"].tick_params(axis='x',labelsize=8)
+            plotobj["Ax"].tick_params(axis='y',labelsize=8)
+            plotobj["ScatterObj"] = plotobj["Ax"].scatter([],[],color="tab:blue")
+            plotobj["Canvas"].draw()          
+            plotobj["Fig"].set_tight_layout(True) 
         frame10.columnconfigure(0,weight=1)
         self.plotobjects1 = plotobj
 
@@ -285,7 +305,7 @@ class WireScanApp(tk.Tk):
             if key in list(self.readbacks.keys()): 
                 del self.readbacks[key]
         # create and print readbacks. StringVar to let it be changeable
-        params = basicdata.allparams[value]
+        params = [self.entries["Phase Parameter"].get().strip()]+basicdata.allparams[value]
         units = basicdata.unitlist
         for i, text in enumerate(params):
             label = ttk.Label(frame011, text=text+":")
@@ -498,7 +518,7 @@ class WireScanApp(tk.Tk):
         basicfuncs.dicttojson(self.setpout,os.path.join(self.setpout["BLD Directory"],"_".join([str(self.setpout["Timestamp"]),self.setpout["BLD"],"SetupParameters.json"])))
         # make dict of tags
         tagdict, i = {}, 1
-        for device in basicdata.allparams[self.setpout['BLD']]+basicdata.sdict[self.setpout['BLD']]+self.setpout['Additional Parameters']:
+        for device in [self.entries["BLD"].get().strip()]+basicdata.allparams[self.setpout['BLD']]+basicdata.sdict[self.setpout['BLD']]+self.setpout['Additional Parameters']:
             tagdict[i]=device
             i=i+1
         self.setpout["Tags"] = tagdict
