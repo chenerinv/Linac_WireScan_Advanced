@@ -14,8 +14,6 @@ import scipy.integrate as integrate
 class dataanalysis: 
     def __init__(self): 
         self.temp = []
-    
-
 
     # summary of fit methods
     def endscanproc(self,procdata,coutput,xlim=[None,None],ylim=[None,None]): 
@@ -27,7 +25,6 @@ class dataanalysis:
             mean = sum(x * y) / sum(y)
             sigma = np.sqrt(sum(y * (x - mean) ** 2) / sum(y))
             popt, pcov = curve_fit(gauss, x, y, p0=[min(y), max(y), mean, sigma], sigma=e, absolute_sigma=True)
-
             return popt,pcov
         
         for i in range(len(basicdata.pdict[coutput["BLD"]])): 
@@ -37,9 +34,9 @@ class dataanalysis:
             y = basicdata.sdict[coutput["BLD"]][i]
 
             # sorting lists to have data points in order of x 
-            ysorted = [x for _,x in sorted(zip(procdata[x],procdata[y]))] # sorting y based on x
+            ysorted = [b for _,b in sorted(zip(procdata[x],procdata[y]))] # sorting y based on x
             xsorted = sorted(procdata[x])
-            
+
             # temp for testing
             # xsorted = np.linspace(-50,50,200)
             # ysorted = np.multiply(np.array(gauss(xsorted,0,3,0,8)), np.array(np.random.normal(1,1.1,200)))
@@ -49,9 +46,9 @@ class dataanalysis:
             # converting to pandas dataframe for Ralitsa's FWHM peakfinding code
             t_df = pd.DataFrame({x: xsorted, y: ysorted})
             try: 
-                peaks, _ = find_peaks(t_df['L:D03BDS'],prominence=0.9) #TODO change to 0.9 for real mode
-                widths, heights, left_ips, right_ips = peak_widths(t_df['L:D03BDS'], peaks, rel_height=0.6)
-                fwhm = t_df['L:DDMOT3'].iloc[round(right_ips[0])]- t_df['L:DDMOT3'].iloc[round(left_ips[0])]
+                peaks, _ = find_peaks(t_df[y],prominence=0.9) #TODO change to 0.9 for real mode
+                widths, heights, left_ips, right_ips = peak_widths(t_df[y], peaks, rel_height=0.6)
+                fwhm = t_df[x].iloc[round(right_ips[0])]- t_df[x].iloc[round(left_ips[0])]
 
                 fitstats["FWHM_raw"] = fwhm
                 fitstats["peaks"] = peaks.tolist()
@@ -68,7 +65,7 @@ class dataanalysis:
                 fitstats["right_ips"] = None
 
             # gaussian fitting & basic plotting
-            rms = np.std(t_df['L:D03BDS'].iloc[:10])
+            rms = np.std(t_df[y].iloc[:10])
             fitstats["rms"] = rms
             x0 = np.zeros(len(t_df))
             sigma = np.zeros(len(t_df))
@@ -77,12 +74,13 @@ class dataanalysis:
             integral = np.zeros(len(t_df))
             A = np.zeros(len(t_df))
         
-            fig2 = plt.figure(figsize=(8,6))
+            matplotlib.use('agg')
+            plt.figure(figsize=(8,6))
             ax = plt.axes()
             props = dict(boxstyle='round', facecolor='white', alpha=0.8)
             try: 
-                errors = np.ones(len(t_df['L:D03BDS']))*rms
-                (H, A, x0, sigma),pcov = gauss_fit(t_df['L:DDMOT3'], t_df['L:D03BDS'], errors)
+                errors = np.ones(len(t_df[y]))*rms
+                (H, A, x0, sigma),pcov = gauss_fit(t_df[x], t_df[y], errors)
                 FWHM = 2.35482 * sigma
                 ps = 1./201.5e6 * FWHM/360. * 1e12
                 integral = A*sigma*np.sqrt(2*np.pi)
@@ -95,6 +93,7 @@ class dataanalysis:
                 fitstats["x0err"] = x0err
                 fitstats["sigmaerr"] = sigmaerr
                 fitstats["integral"] = abs(integral)
+                fitgaussgo = 1
             except: 
                 fitstats["FWHM_ps"] = None
                 fitstats["FWHM_Gauss"] = None
@@ -103,28 +102,33 @@ class dataanalysis:
                 fitstats["x0err"] = None
                 fitstats["sigmaerr"] = None
                 fitstats["integral"] = None
+                fitgaussgo = 0
 
             basicfuncs.dicttojson(fitstats,os.path.join(coutput["BLD Directory"],"_".join([str(coutput["Timestamp"]),coutput["BLD"],"FitStats.json"])))
-
-            textstr = '\n'.join((
-                    r'$\mu=%.2f\pm%.2f$' % (x0, np.sqrt(pcov[2][2]),),
-                    r'$\sigma=%.2f\pm%.2f$' % (sigma, np.sqrt(pcov[3][3]),),
-                    r'$\mathrm{FWHM}=%.2f\mathrm{ps}$' % (ps, )))
-
-            plt.plot(t_df['L:DDMOT3'], t_df['L:D03BDS'], '.',color='k', label='raw')
-            plt.plot(t_df['L:DDMOT3'], gauss(t_df['L:DDMOT3'], *gauss_fit(t_df['L:DDMOT3'], 
-                        t_df['L:D03BDS'], errors)[0]), '-',color='r', label='fit')
+            
+            plt.plot(t_df[x], t_df[y], '.',color='k', label='raw')
+            if fitgaussgo == 1: 
+                try: 
+                    # textstr = '\n'.join((
+                    #     r'$\mu=%.2f\pm%.2f$' % (x0, np.sqrt(pcov[2][2]),),
+                    #     r'$\sigma=%.2f\pm%.2f$' % (sigma, np.sqrt(pcov[3][3]),),
+                    #     r'$\mathrm{FWHM}=%.2f\mathrm{ps}$' % (ps, )))
+                    plt.plot(t_df[x], gauss(t_df[x], *gauss_fit(t_df[x],t_df[y], errors)[0]), '-',color='r', label='fit')
+                    #ax.text(0.75, 0.95, textstr, color='k', fontsize='medium', verticalalignment='top', bbox=props,transform=ax.transAxes)
+                except: 
+                    print("There was an issue plotting the fit.") # should still let the raw data be plotted
             plt.grid(True)
             plt.legend(loc="upper left")
-            ax.text(0.75, 0.95, textstr, color='k', fontsize='medium', verticalalignment='top', bbox=props,transform=ax.transAxes)
 
             plt.ylabel('EMT signal (V)',fontsize='x-large')
-            plt.xlabel('Trombone phase (deg@201 MHz)',fontsize='x-large')
+            plt.xlabel('Trombone phase (deg@805 MHz)',fontsize='x-large')
             if xlim != [None,None]: 
                 plt.xlim(*xlim)
             if ylim != [None,None]: 
                 plt.ylim(*ylim)
-            plt.savefig(os.path.join(coutput["BLD Directory"],"_".join([str(coutput["Timestamp"]),coutput["BLD"],"Plot1.png"])))        
+
+            plt.savefig(os.path.join(coutput["BLD Directory"],"_".join([str(coutput["Timestamp"]),coutput["BLD"],"Plot1.png"])))    
+            plt.close() 
 
     # return list of data corresponding to the input parameters and dataset
     def generatefitline(self,inputnp,params,fit): 
