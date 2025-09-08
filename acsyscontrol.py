@@ -203,6 +203,7 @@ class acsyscontrol:
         dictcopy = self.thread_dict[scanthreadname]['outdict'].copy() 
         grabd = basicfuncs.rawtowires(dictcopy,modstr)
         for i, poskey in enumerate(basicdata.pdict[modstr]): 
+            print(plotobjects["ScatterObj"][poskey])
             plotobjects["ScatterObj"][poskey].remove()
             plotobjects["ScatterObj"][poskey] = plotobjects["Ax"][poskey].scatter(grabd[poskey],grabd[basicdata.sdict[modstr][i]],color="tab:blue")
             plotobjects["Canvas"][poskey].draw()

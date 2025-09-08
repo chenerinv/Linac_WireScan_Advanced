@@ -385,7 +385,7 @@ class WireScanApp(tk.Tk):
             if key == "BLD": 
                 tval = tval.strip()
                 if tval not in list(basicdata.pdict.keys()): 
-                    self.messageprint(tval+" is an invalid wire.\n")
+                    self.messageprint(tval+" is an invalid BLD.\n")
                     return False
             elif key == "Event": 
                 tval = tval.strip()
@@ -399,6 +399,11 @@ class WireScanApp(tk.Tk):
             elif key == "Save Directory": 
                 if os.path.isdir(tval) is False: 
                     self.messageprint(tval+" is not a directory.\n")
+                    return False
+            elif key == "Phase Parameter": 
+                tval = tval.strip()
+                if tval not in basicdata.rfpositionoptions: 
+                    self.messageprint(tval+" is an invalid phase parameter.\n")
                     return False
             elif key in ["xlim","ylim"]: 
                 tval = tval.split(',')
@@ -447,7 +452,7 @@ class WireScanApp(tk.Tk):
                     self.messageprint("There is an unrecognized key in the JSON file.\n")
                     return
                 # clear what's present
-                if (key == "BLD") or (key == "Event"):
+                if (key == "BLD") or (key == "Event") or (key == "Phase Parameter"):
                     self.entries[key].set('')
                 else:
                     self.entries[key].delete(0,tk.END)
@@ -466,8 +471,17 @@ class WireScanApp(tk.Tk):
             # initate the actions that happen after Wire is selected
             wire = self.entries["BLD"].get().strip()
             if wire in list(basicdata.pdict.keys()): # if a wire was selected with the json input
+                if ("Phase Parameter" in cinkeys) and (tempinput[key] != ""): # adding phase has to occur after BLD updated 
+                    errorcheck = self.checkentriescorrect({"Phase Parameter": tempinput["Phase Parameter"]})
+                    if errorcheck != False: 
+                        self.entries["Phase Parameter"].set(tempinput["Phase Parameter"])
+                        self.selectedphase(frame011,frame10)
+                else:
+                    self.lockentries("readonly",["Phase Parameter"],[])
+                    self.entries["Phase Parameter"].set(basicdata.pdict[wire]) 
                 self.readbackpopup(wire,frame011)
                 self.plotinit(wire,frame10)
+            print(self.entries["BLD"].get())
             return
 
     def lockentries(self,statestr,entrykeys,buttonkeys): 

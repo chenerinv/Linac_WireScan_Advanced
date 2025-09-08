@@ -69,6 +69,7 @@ markerlinelist = ['-',':','-.','--','o-','v-','^-','s-','o:','v:','^:','s:']
 
 checkcorrect = {
     "BLD": str,
+    "Phase Parameter": str,
     "Out Limit": float,
     "In Limit": float,
     "Event": str,
