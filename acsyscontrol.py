@@ -52,6 +52,25 @@ async def runscan(con,threadcontext,maindict,messageprint):
             else: 
                 pass # this is likely a status response
 
+async def setscan(con,threadcontext,maindict,messageprint): 
+    """Set point, collect data on event for a number of tries, repeat."""
+    # setup context
+    async with acsys.dpm.DPMContext(con,dpm_node="DPM03") as dpm:   
+        # for key in maindict['Tags'].keys(): 
+        #     await dpm.add_entry(key,maindict['Tags'][key]+"@e,"+maindict['Event'])
+        # await dpm.add_entry(0,"L:C0VPA@p,1H") # need this to stop it from lagging unbearably
+
+        await dpm.add_entry(0,"G:AMANDA.SETTING")
+        await dpm.add_entry(1,"L:D01BDS@e,0A")
+        await dpm.add_entry(2,"L:GR1MID@e,0A")
+
+        await dpm.start()
+
+        async for evt_res in dpm: 
+            
+
+
+
 async def checkp(con,paramstrs,result,tries):
     """Check a parameter value."""
     # setup context
