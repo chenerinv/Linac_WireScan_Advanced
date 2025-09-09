@@ -107,26 +107,28 @@ class dataanalysis:
             basicfuncs.dicttojson(fitstats,os.path.join(coutput["BLD Directory"],"_".join([str(coutput["Timestamp"]),coutput["BLD"],"FitStats.json"])))
             
             plt.plot(t_df[x], t_df[y], '.',color='k', label='raw')
-            if fitgaussgo == 1: 
-                try: 
-                    # textstr = '\n'.join((
-                    #     r'$\mu=%.2f\pm%.2f$' % (x0, np.sqrt(pcov[2][2]),),
-                    #     r'$\sigma=%.2f\pm%.2f$' % (sigma, np.sqrt(pcov[3][3]),),
-                    #     r'$\mathrm{FWHM}=%.2f\mathrm{ps}$' % (ps, )))
-                    plt.plot(t_df[x], gauss(t_df[x], *gauss_fit(t_df[x],t_df[y], errors)[0]), '-',color='r', label='fit')
-                    #ax.text(0.75, 0.95, textstr, color='k', fontsize='medium', verticalalignment='top', bbox=props,transform=ax.transAxes)
-                except: 
-                    print("There was an issue plotting the fit.") # should still let the raw data be plotted
             plt.grid(True)
-            plt.legend(loc="upper left")
-
             plt.ylabel('EMT signal (V)',fontsize='x-large')
             plt.xlabel('Trombone phase (deg@805 MHz)',fontsize='x-large')
             if xlim != [None,None]: 
                 plt.xlim(*xlim)
             if ylim != [None,None]: 
                 plt.ylim(*ylim)
+            plt.savefig(os.path.join(coutput["BLD Directory"],"_".join([str(coutput["Timestamp"]),coutput["BLD"],"Plot1.png"])))   # just in case
 
+            # the suspicious fit plot
+            if (fitgaussgo == 1) and (np.isinf(pcov[2][2]) is False) and (np.isinf(pcov[3][3]) is False): 
+                try: 
+                    textstr = '\n'.join((
+                        r'$\mu=%.2f\pm%.2f$' % (x0, np.sqrt(pcov[2][2]),),
+                        r'$\sigma=%.2f\pm%.2f$' % (sigma, np.sqrt(pcov[3][3]),),
+                        r'$\mathrm{FWHM}=%.2f\mathrm{ps}$' % (ps, )))
+                    plt.plot(t_df[x], gauss(t_df[x], *gauss_fit(t_df[x],t_df[y], errors)[0]), '-',color='r', label='fit')
+                    ax.text(0.75, 0.95, textstr, color='k', fontsize='medium', verticalalignment='top', bbox=props,transform=ax.transAxes)
+                except: 
+                    print("There was an issue plotting the fit.") # should still let the raw data be plotted
+            
+            plt.legend(loc="upper left")
             plt.savefig(os.path.join(coutput["BLD Directory"],"_".join([str(coutput["Timestamp"]),coutput["BLD"],"Plot1.png"])))    
             plt.close() 
 
