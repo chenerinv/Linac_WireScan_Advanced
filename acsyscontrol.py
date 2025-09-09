@@ -55,20 +55,61 @@ async def runscan(con,threadcontext,maindict,messageprint):
 async def setscan(con,threadcontext,maindict,messageprint): 
     """Set point, collect data on event for a number of tries, repeat."""
     # setup context
-    async with acsys.dpm.DPMContext(con,dpm_node="DPM03") as dpm:   
-        # for key in maindict['Tags'].keys(): 
-        #     await dpm.add_entry(key,maindict['Tags'][key]+"@e,"+maindict['Event'])
-        # await dpm.add_entry(0,"L:C0VPA@p,1H") # need this to stop it from lagging unbearably
+    async with acsys.dpm.DPMContext(con,dpm_node="DPM03") as dpm: 
+        # get kerberos ticket
+        try: 
+            await dpm.enable_settings(role='testing')
+        except: 
+            messageprint("Invalid Kerberos realm.\n")
+            return
 
-        await dpm.add_entry(0,"G:AMANDA.SETTING")
-        await dpm.add_entry(1,"L:D01BDS@e,0A")
-        await dpm.add_entry(2,"L:GR1MID@e,0A")
+        await dpm.add_entry(0,maindict["SettingParam"]+".SETTING")
+        for key in maindict['Tags'].keys(): 
+            await dpm.add_entry(key,maindict['Tags'][key]+"@e,"+maindict['Event'])
+        await dpm.add_entry(-1,"L:C0VPA@p,1H") # need this to stop it from lagging unbearably
 
         await dpm.start()
-
+        
+        countlist = {}
+        for tag in maindict['Tags']: 
+            countlist[tag] = 0
+        setcount = 0
+        
+        # apply first setting
+        await dpm.apply_settings([(0,maindict["SettingsList"][setcount])])
+        setcount+=1
+        time.sleep(maindict["SleepTime"]) # wait for phase to stabilize
         async for evt_res in dpm: 
-            
+            if (evt_res.isReading) and (evt_res.tag > 0): # skip saving data on the settings or marker/timing ones
+                if countlist[evt_res.tag] <= maindict["NumRead"]:
+                    threadcontext['outdictraw']["tags"].append(evt_res.tag)
+                    threadcontext['outdictraw']["data"].append(evt_res.data)
+                    threadcontext['outdictraw']["stamps"].append(evt_res.stamp.timestamp())
+                    threadcontext['outdictcollate'][evt_res.tag][setcount-1].append(evt_res.data)
+                    countlist[evt_res.tag]+=1
+            else: pass
 
+            # check if enough data was collected for each item on the list
+            checkpass = 1
+            for key in countlist: 
+                if countlist[key] != 10: 
+                    checkpass = 0
+                    break
+            # if so, apply 
+            if checkpass == 1: 
+                for key in countlist: countlist[key] = 0
+                if setcount > len(maindict["SettingsList"])-1:
+                    threadcontext['stop'].set()
+                await dpm.apply_settings([(0,maindict["SettingsList"][setcount])])
+                print("set "+str(maindict["SettingsList"][setcount]))
+                setcount+=1
+                time.sleep(maindict["SleepTime"]) # wait for phase to stabilize
+
+    # maindict or coutput needs additions: 
+    # SleepTime (seconds)
+    # SettingsList (list of settings)
+    # NumRead (int, number of readings at each setting)
+    # SettingParam (no .setting, string)
 
 
 async def checkp(con,paramstrs,result,tries):
@@ -132,6 +173,19 @@ class acsyscontrol:
         }
         tread.start()
 
+    def start_setscan_thread(self,thread_name,coutput,lockentries,messageprint,plot_thread_name): 
+        """Start mainscan thread."""
+        tmscan = threading.Thread(target=self.mainsetscan,args=(thread_name,coutput,lockentries,messageprint,plot_thread_name,))
+        self.thread_dict[thread_name] = {
+            'thread': tmscan, 
+            'finally': threading.Event(),
+            'stop': threading.Event(),
+            'outdictraw': {'tags': [], 'data': [],'stamps': []},
+            'outdictcollate': {"setting": coutput["SettingsList"],}
+        }
+        for key in coutput['Tags']: self.thread_dict[thread_name][key] = [[] for _ in coutput["SettingsList"]t]
+        tmscan.start()
+
     def start_scan_thread(self,thread_name,coutput,lockentries,messageprint,plot_thread_name): 
         """Start mainscan thread."""
         tmscan = threading.Thread(target=self.mainscan,args=(thread_name,coutput,lockentries,messageprint,plot_thread_name,))
@@ -169,6 +223,42 @@ class acsyscontrol:
             acsys.run_client(updatereadback_1H,threadcontext=self.thread_dict[thread_name],strvardict=strvardict)             
         finally: 
             self.thread_dict[thread_name]['stop'].set()
+
+    def mainsetscan(self,thread_name,coutput,lockentries,messageprint,plot_thread_name): 
+        """Execute setscan."""
+        try: 
+            acsys.run_client(setscan,threadcontext=self.thread_dict[thread_name],maindict=coutput,messageprint=messageprint)             
+        finally: 
+            # save data in threaddict to csv raw
+            basicfuncs.dicttocsv(self.thread_dict[thread_name]['outdictraw'],os.path.join(coutput["BLD Directory"],"_".join([str(coutput["Timestamp"]),coutput["BLD"],"RawData.csv"])))
+            #TODO save data in threaddict 
+            
+            # end live plotting
+            if plot_thread_name in self.get_list_of_threads(): 
+                self.thread_dict[plot_thread_name]['stop'].set()
+            # unlock entries
+            lockentries("enabled",basicdata.lockedentries,basicdata.lockedbuttons) 
+            #TODO process data & save processed data
+            procdata = basicfuncs.rawtowires(self.thread_dict[thread_name]['outdict'],coutput["BLD"])
+            basicfuncs.dicttocsv(procdata,os.path.join(coutput["BLD Directory"],"_".join([str(coutput["Timestamp"]),coutput["BLD"],"ProcData.csv"])))
+            # get average of the tags & save
+            coutput["TagAvg"] = {}
+            for key in coutput["Tags"].keys(): 
+                avg, std, len = basicfuncs.avgtag(self.thread_dict[thread_name]['outdict'],key)
+                coutput["TagAvg"][coutput["Tags"][key]] = [avg, std, len]
+            basicfuncs.dicttojson(coutput["TagAvg"],os.path.join(coutput["BLD Directory"],"_".join([str(coutput["Timestamp"]),coutput["BLD"],"TagAvgs.json"])))
+            # analyze data 
+            try: 
+                if self.thread_dict[thread_name]['outdict']['tags'] != []: # skip analysis if the dict is empty
+                    self.dataanalysis.endscanproc(procdata,coutput,xlim=coutput["xlim"],ylim=coutput["ylim"])
+                    messageprint("Analysis complete. Data saved at "+coutput["BLD Directory"]+"\n")
+                else: 
+                    messageprint("No data was collected, analysis not initiated. \n")
+            except: 
+                messageprint("There was an issue with the analysis.\n")
+            # thread done, can be closed
+            self.thread_dict[thread_name]['finally'].set()
+            messageprint("Scan closed.\n")
 
     def mainscan(self,thread_name,coutput,lockentries,messageprint,plot_thread_name): 
         """Execute mainscan."""
