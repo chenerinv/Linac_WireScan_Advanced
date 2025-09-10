@@ -183,7 +183,7 @@ class acsyscontrol:
             'outdictraw': {'tags': [], 'data': [],'stamps': []},
             'outdictcollate': {"setting": coutput["SettingsList"],}
         }
-        for key in coutput['Tags']: self.thread_dict[thread_name][key] = [[] for _ in coutput["SettingsList"]t]
+        for key in coutput['Tags']: self.thread_dict[thread_name][key] = [[] for _ in coutput["SettingsList"]]
         tmscan.start()
 
     def start_scan_thread(self,thread_name,coutput,lockentries,messageprint,plot_thread_name): 
@@ -231,16 +231,13 @@ class acsyscontrol:
         finally: 
             # save data in threaddict to csv raw
             basicfuncs.dicttocsv(self.thread_dict[thread_name]['outdictraw'],os.path.join(coutput["BLD Directory"],"_".join([str(coutput["Timestamp"]),coutput["BLD"],"RawData.csv"])))
-            #TODO save data in threaddict 
-            
+            #TODO save processed data in threaddict 
+            basicfuncs.dicttojson(self.thread_dict[thread_name]['outdictcollate'],os.path.join(coutput["BLD Directory"],"_".join([str(coutput["Timestamp"]),coutput["BLD"],"ProcData.csv"])))
             # end live plotting
             if plot_thread_name in self.get_list_of_threads(): 
                 self.thread_dict[plot_thread_name]['stop'].set()
             # unlock entries
             lockentries("enabled",basicdata.lockedentries,basicdata.lockedbuttons) 
-            #TODO process data & save processed data
-            procdata = basicfuncs.rawtowires(self.thread_dict[thread_name]['outdict'],coutput["BLD"])
-            basicfuncs.dicttocsv(procdata,os.path.join(coutput["BLD Directory"],"_".join([str(coutput["Timestamp"]),coutput["BLD"],"ProcData.csv"])))
             # get average of the tags & save
             coutput["TagAvg"] = {}
             for key in coutput["Tags"].keys(): 
@@ -250,7 +247,10 @@ class acsyscontrol:
             # analyze data 
             try: 
                 if self.thread_dict[thread_name]['outdict']['tags'] != []: # skip analysis if the dict is empty
-                    self.dataanalysis.endscanproc(procdata,coutput,xlim=coutput["xlim"],ylim=coutput["ylim"])
+                    # average data and interpolate the 
+                    avgdata = basicfuncs.bldproc(self.thread_dict[thread_name]['outdictcollate'],coutput) 
+                    basicfuncs.dicttojson(avgdata,os.path.join(coutput["BLD Directory"],"_".join([str(coutput["Timestamp"]),coutput["BLD"],"AvgData.csv"])))
+                    self.dataanalysis.endscanproc(avgdata,coutput,xlim=coutput["xlim"],ylim=coutput["ylim"])
                     messageprint("Analysis complete. Data saved at "+coutput["BLD Directory"]+"\n")
                 else: 
                     messageprint("No data was collected, analysis not initiated. \n")

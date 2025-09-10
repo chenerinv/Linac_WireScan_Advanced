@@ -122,6 +122,39 @@ def rawtowires(indict,modstr):
     checklengths() # need to call again to check that the last set rounded off right.
     return outdict
 
+def caldatainterp(caldata,queryV):
+    """Provide dictionary caldata (keys "Voltage" and "Phase" with lists inside) and a voltage as a query.""" 
+    for i,val in enumerate(caldata["Voltage"]): 
+        currsub = queryV-val
+        if currsub == 0: 
+            return caldata["Phase"][i]
+        elif currsub < 0:  
+            # execute linear interpolation 
+            x1,x2,y1,y2 = caldata["Phase"][i-1], caldata["Phase"][i], caldata["Voltage"][i-1], val 
+            return y1+(y2-y1)/(x2-x1)*(queryV-x1)
+
+def bldproc(indict,maindict):
+    # indict {"settings": [], 1: [[]], 2: [[]],}
+    outdict = {} # in future, use caldata here
+
+    # parse csv with caldata outside of interpolation calc, since we only want to do this once
+    caldata = {"Voltage": [], "Phase": []}
+    with open("caldata.csv") as file: 
+        data = file.readlines()
+    for line in data: 
+        sline = line.split(",")
+        caldata["Voltage"].append(sline[0].strip())
+        caldata["Phase"].append(sline[1].strip())
+    outdict[maindict["SettingParam"]] = [caldatainterp(caldata,x) for x in indict["settings"]] # interpolated position data
+
+    reading = basicdata.sdict[maindict["BLD"]]
+    readingtag = [key for key in maindict["Tags"] if maindict["Tags"][key] == reading]
+
+    outdict[reading] = [np.average(x) for x in indict[readingtag]]
+    outdict[reading+" Err"] = [np.std(x) for x in indict[readingtag]]
+
+    return outdict
+
 def avgtag(indict,tagkey): 
     """."""
     data = []
