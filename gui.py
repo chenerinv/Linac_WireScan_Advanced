@@ -17,8 +17,8 @@ class WireScanApp(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Bunch Length Detector Data Collector")
-        self.geometry("850x430")
-        self.minsize(850,430)
+        self.geometry("850x490")
+        self.minsize(850,490)
         self.entries = {} # tk entries
         self.buttons = {} # tk buttons
         self.setpout = {} # dictionary with setup data
@@ -57,9 +57,9 @@ class WireScanApp(tk.Tk):
         # create subframes in tab1
         frame00 = ttk.LabelFrame(self.tab1,borderwidth=5,relief="solid",labelanchor="nw",text="Quick Setup")
         frame00.grid(column=0,row=0,columnspan=1,pady=1,sticky="nw")
-        frame01 = ttk.Frame(self.tab1)
+        frame01 = ttk.Frame(self.tab1) # for BLD selection etc
         frame01.grid(column=0,row=1,columnspan=1,pady=1,sticky="w")
-        frame02 = ttk.LabelFrame(self.tab1,borderwidth=5,relief="solid",labelanchor="nw",text="Control")
+        frame02 = ttk.Frame(self.tab1)
         frame02.grid(column=0,row=2,columnspan=1,pady=1,sticky="w")
         frame04 = ttk.LabelFrame(self.tab1,borderwidth=5,relief="solid",labelanchor="n",text="Messages")
         frame04.grid(column=0,row=4,columnspan=1,pady=1,sticky="wes")
@@ -78,11 +78,17 @@ class WireScanApp(tk.Tk):
 
         # frame01
         frame010 = ttk.LabelFrame(frame01,borderwidth=5,relief="solid",labelanchor="nw",text="BLD Selection")
-        frame010.grid(column=0,row=0,columnspan=1,pady=1,sticky="w")
+        frame010.grid(column=0,row=0,columnspan=1,pady=1,sticky="nw")
         frame011 = ttk.LabelFrame(frame01,borderwidth=5,relief="solid",labelanchor="n",text="Readbacks")
         frame011.grid(column=1,row=0,columnspan=1,rowspan=2,pady=1,sticky="n") # nested in frame 01, so must be made here not readbackpopup()
-        frame012 = ttk.LabelFrame(frame01,borderwidth=5,relief="solid",labelanchor="nw",text="Plot Settings")
-        frame012.grid(column=0,row=1,columnspan=1,pady=1,sticky="w")
+        frame012 = ttk.LabelFrame(frame01,borderwidth=5,relief="solid",labelanchor="nw",text="Settings")
+        frame012.grid(column=0,row=1,columnspan=1,pady=1,sticky="nw")
+
+        # frame 02
+        frame020 = ttk.LabelFrame(frame02,borderwidth=5,relief="solid",labelanchor="nw",text="Control")
+        frame020.grid(column=0,row=0,columnspan=1,pady=1,sticky="w")
+        frame021 = ttk.LabelFrame(frame02,borderwidth=5,relief="solid",labelanchor="nw",text="Saved Plot")
+        frame021.grid(column=1,row=0,columnspan=1,pady=1,sticky="w")
 
         # frame00
         text00 = "Setup Parameters"
@@ -126,38 +132,54 @@ class WireScanApp(tk.Tk):
             # blank unless selectedwire activates
 
         # frame 012
-        labels2 = ["xlim","ylim"]
-        for i,text in enumerate(labels2):
-            label = ttk.Label(frame012,text=text)
-            label.grid(column=i*2,row=0,padx=2,pady=2)
-            ToolTip(label,basicdata.tooltips[text])
-        entry012_0 = ttk.Entry(frame012,width=8)
-        entry012_0.grid(column=1,row=0,padx=2,pady=2)
-        self.entries[labels2[0]] = entry012_0
-        entry012_1 = ttk.Entry(frame012,width=8)
-        entry012_1.grid(column=3,row=0,padx=2,pady=2)
-        self.entries[labels2[1]] = entry012_1
+        label = ttk.Label(frame012,text="test")
+        label.grid(column=0,row=0,padx=2,pady=2)
+
+        # labels2 = ["xlim","ylim"]
+        # for i,text in enumerate(labels2):
+        #     label = ttk.Label(frame012,text=text)
+        #     label.grid(column=i*2,row=0,padx=2,pady=2)
+        #     ToolTip(label,basicdata.tooltips[text])
+        # entry012_0 = ttk.Entry(frame012,width=8)
+        # entry012_0.grid(column=1,row=0,padx=2,pady=2)
+        # self.entries[labels2[0]] = entry012_0
+        # entry012_1 = ttk.Entry(frame012,width=8)
+        # entry012_1.grid(column=3,row=0,padx=2,pady=2)
+        # self.entries[labels2[1]] = entry012_1
 
         # frame03 (Additional Parameters)
             # blank unless scan is started
 
-        # frame02
+        # frame020
         text02 = "Save Directory"
-        label02 = ttk.Label(frame02, text=text02)
+        label02 = ttk.Label(frame020, text=text02)
         label02.grid(column=0, row=0, sticky='w', padx=5, pady=5)
         ToolTip(label02,basicdata.tooltips[text02])
-        entry02 = ttk.Entry(frame02)
+        entry02 = ttk.Entry(frame020)
         entry02.grid(column=1, row=0, sticky='ew', padx=5, pady=2)
         self.entries[text02] = entry02
-        browse_button_02 = ttk.Button(frame02, text='Browse', command=lambda e=entry02, t=text02: self.browse(e,t))
+        browse_button_02 = ttk.Button(frame020, text='Browse', command=lambda e=entry02, t=text02: self.browse(e,t))
         browse_button_02.grid(column=2, row=0, sticky='w', padx=5, pady=2)
         self.buttons["Browse2"] = browse_button_02
-        start_button = ttk.Button(frame02, text="Start", command= lambda: self.startbutton(frame03))
+        start_button = ttk.Button(frame020, text="Start", command= lambda: self.startbutton(frame03))
         start_button.grid(column=0, row=1, columnspan=1, padx=1, pady=1)
         self.buttons["Start"] = start_button
-        abort_button = ttk.Button(frame02, text="Stop", command=self.abortbutton)
+        abort_button = ttk.Button(frame020, text="Stop", command=self.abortbutton)
         abort_button.grid(column=1, row=1, columnspan=1, padx=1, pady=1)
         self.buttons["Stop"] = abort_button
+
+        # frame 021
+        labels2 = ["xlim","ylim"]
+        for i,text in enumerate(labels2):
+            label = ttk.Label(frame021,text=text)
+            label.grid(column=0,row=i,padx=2,pady=2)
+            ToolTip(label,basicdata.tooltips[text])
+        entry012_0 = ttk.Entry(frame021,width=8)
+        entry012_0.grid(column=1,row=0,padx=2,pady=2)
+        self.entries[labels2[0]] = entry012_0
+        entry012_1 = ttk.Entry(frame021,width=8)
+        entry012_1.grid(column=1,row=1,padx=2,pady=2)
+        self.entries[labels2[1]] = entry012_1
 
     def create_widgets_in_tab3(self):
         # create subframes in tab3
@@ -520,6 +542,15 @@ class WireScanApp(tk.Tk):
             self.metad["Frequency"] = m[4]
         basicfuncs.dicttojson(self.metad,os.path.join(self.setpout["BLD Directory"],"_".join([str(self.setpout["Timestamp"]),self.setpout["BLD"],"Metadata.json"])))
         
+        #TODO edit to accomodate settings
+            # maindict or coutput or setpout needs additions: 
+            # SleepTime (seconds)
+            # SettingsList (list of settings)
+            # NumRead (int, number of readings at each setting)
+            # SettingParam (no .setting, string)
+
+
+
         # start wirescan 
         self.plot_thread = "liveplot" 
         self.acsyscontrol.start_scan_thread(self.scan_thread,self.setpout,self.lockentries,self.messageprint,self.plot_thread)

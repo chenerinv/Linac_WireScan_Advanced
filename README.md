@@ -4,7 +4,7 @@ Program to collect BLD RF phase scan data.
 ## Bugs & To-Do 
 - also needs an alternative analysis path, esp if collecting data that turns out to be non-gaussian
 - does still lag if you try to switch BLDs too quickly...all I can say is slow down 
-    
+- finish implementing setting into the gui side & the setting setup    
 
 # Completed
 - add Setup Parameter Upload capability.
