@@ -17,8 +17,8 @@ class WireScanApp(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Bunch Length Detector Data Collector")
-        self.geometry("850x490")
-        self.minsize(850,490)
+        self.geometry("860x500")
+        self.minsize(860,500)
         self.entries = {} # tk entries
         self.buttons = {} # tk buttons
         self.setpout = {} # dictionary with setup data
@@ -132,8 +132,24 @@ class WireScanApp(tk.Tk):
             # blank unless selectedwire activates
 
         # frame 012
-        label = ttk.Label(frame012,text="test")
-        label.grid(column=0,row=0,padx=2,pady=2)
+        frame0120 = ttk.Frame(frame012)
+        frame0120.grid(column=0,row=1,columnspan=1,pady=1,sticky="w")
+        self.entries["SettingsEnabled"] = tk.IntVar()
+        c1 = tk.Checkbutton(frame012,text="Settings Enabled",variable=self.entries["SettingsEnabled"],command=lambda:self.settingsenabled(frame0120))
+        c1.grid(column=0,row=0,padx=2,pady=2)
+        
+        # frame0120
+        fieldlabels = ["Center Phase","Phase Step","Half-Range","Samples Per Point"]
+        for i,label in enumerate(fieldlabels): 
+            templabel = ttk.Label(frame0120,text=label)
+            templabel.grid(column=i%2,row=math.floor(i/2)*2,padx=2,pady=2)
+            self.entries[fieldlabels[i]] = ttk.Entry(frame0120,width=16)
+            self.entries[fieldlabels[i]].grid(column=i%2,row=math.floor(i/2)*2+1, columnspan = 1,sticky="w",padx=2, pady=2)    
+
+        frame0120.grid_forget() # blank unless settingsenabled activates
+
+        # label = ttk.Label(frame012,text="test")
+        # label.grid(column=0,row=0,padx=2,pady=2)
 
         # labels2 = ["xlim","ylim"]
         # for i,text in enumerate(labels2):
@@ -357,6 +373,14 @@ class WireScanApp(tk.Tk):
             # label2.grid(column=j+2, row=k, sticky='n', padx=2, pady=2)
         # start the readbacks thread
         self.start_readback_thread()
+
+    def settingsenabled(self,frame0120):
+        state = self.entries["SettingsEnabled"].get()
+        if state == 1: 
+            frame0120.grid()
+        else: 
+            frame0120.grid_forget()
+            # adjust setup
 
     def start_readback_thread(self): 
         """Start the readback thread and clear it if already existent. Shares fetching for readbackpopup and addparampopup."""
