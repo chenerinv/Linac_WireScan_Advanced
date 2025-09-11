@@ -17,8 +17,8 @@ class WireScanApp(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Bunch Length Detector Data Collector")
-        self.geometry("860x500")
-        self.minsize(860,500)
+        self.geometry("880x550")
+        self.minsize(880,550)
         self.entries = {} # tk entries
         self.setpout = {} # dictionary with setup data
         self.metad = {} # dictionary with metadata
@@ -133,7 +133,7 @@ class WireScanApp(tk.Tk):
         # frame 012
         frame0120 = ttk.Frame(frame012)
         frame0120.grid(column=0,row=1,columnspan=1,pady=1,sticky="w")
-        self.entries["Settings Enabled"] = [tk.IntVar()] 
+        self.entries["Settings Enabled"] = [tk.IntVar()] # 0 is the variable, 1 is the object
         c1 = tk.Checkbutton(frame012,text="Settings Enabled",variable=self.entries["Settings Enabled"][0],command=lambda:self.settingsenabled(frame0120))
         c1.grid(column=0,row=0,padx=2,pady=2)
         self.entries["Settings Enabled"].append(c1)
@@ -144,8 +144,8 @@ class WireScanApp(tk.Tk):
             templabel = ttk.Label(frame0120,text=label)
             templabel.grid(column=i%2,row=math.floor(i/2)*2,padx=2,pady=2)
             self.entries[fieldlabels[i]] = ttk.Entry(frame0120,width=16)
-            self.entries[fieldlabels[i]].grid(column=i%2,row=math.floor(i/2)*2+1, columnspan = 1,sticky="w",padx=2, pady=2)    
-
+            self.entries[fieldlabels[i]].grid(column=i%2,row=math.floor(i/2)*2+1, columnspan = 1,sticky="w",padx=2, pady=2) 
+            self.entries[fieldlabels[i]].insert(0,0) # this is so they show up as ints not strings...
         frame0120.grid_forget() # blank unless settingsenabled activates
 
         # label = ttk.Label(frame012,text="test")
@@ -399,7 +399,8 @@ class WireScanApp(tk.Tk):
             if key in basicdata.skippedkeys: # skipping the ones irrelevant to setup
                 continue
             try: 
-                tval = indict[key].get().strip()
+                if isinstance(indict[key],list): tval = indict[key][0].get()
+                else: tval = indict[key].get().strip()
             except AttributeError: 
                 tval = indict[key]
             except: 

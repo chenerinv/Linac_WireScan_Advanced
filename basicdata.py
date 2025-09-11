@@ -91,7 +91,7 @@ checkcorrect = {
 }
 
 requiredkeys = ["BLD", "Event", "Save Directory"]
-skippedkeys = ["Messages", "Setup Parameters", "Help1", "Help2", "Help3"]
+skippedkeys = ["Messages", "Setup Parameters", "Help1", "Help2", "Help3","Browse1","Upload","Browse2","Start","Stop"]
 ignorekeys = ["Timestamp","BLD Directory","Direction","Source","L:D7TOR","Pulse Length", "Frequency","Tags"]
 lockedentries = ["BLD","Event","Save Directory","User Comment","Additional Parameters","xlim","ylim",
                  "Center Phase","Phase Step","Half-Range","Samples Per Point","Browse1", "Upload", "Browse2","Start","Settings Enabled"]
