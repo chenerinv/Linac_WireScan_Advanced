@@ -40,7 +40,8 @@ tooltips = {
     "Center Phase": "Value (deg) the range should center around.",
     "Phase Step": "Step (deg) in phase of the measurement.",
     "Half-Range": "Range of half the scan in degrees. May be slightly over if step does not match correctly.",
-    "Samples Per Point": "Number of samples to take on event at each phase.",
+    "Samples/Point": "Number of samples to take on event at each phase.",
+    "Sleep Time": "Time (s) to wait for setting to stabilize."
 }
 
 helpstrings = {
@@ -87,11 +88,12 @@ checkcorrect = {
     "Center Phase": float,
     "Phase Step": float,
     "Half-Range": float,
-    "Samples Per Point": int,
+    "Samples/Point": int,
+    "Sleep Time": float
 }
 
 requiredkeys = ["BLD", "Event", "Save Directory"]
 skippedkeys = ["Messages", "Setup Parameters", "Help1", "Help2", "Help3","Browse1","Upload","Browse2","Start","Stop"]
 ignorekeys = ["Timestamp","BLD Directory","Direction","Source","L:D7TOR","Pulse Length", "Frequency","Tags"]
 lockedentries = ["BLD","Event","Save Directory","User Comment","Additional Parameters","xlim","ylim",
-                 "Center Phase","Phase Step","Half-Range","Samples Per Point","Browse1", "Upload", "Browse2","Start","Settings Enabled"]
+                 "Center Phase","Phase Step","Half-Range","Samples/Point","Sleep Time","Browse1", "Upload", "Browse2","Start","Settings Enabled"]

@@ -136,15 +136,17 @@ class WireScanApp(tk.Tk):
         self.entries["Settings Enabled"] = [tk.IntVar()] # 0 is the variable, 1 is the object
         c1 = tk.Checkbutton(frame012,text="Settings Enabled",variable=self.entries["Settings Enabled"][0],command=lambda:self.settingsenabled(frame0120))
         c1.grid(column=0,row=0,padx=2,pady=2)
+        ToolTip(c1,basicdata.tooltips["Settings Enabled"])
         self.entries["Settings Enabled"].append(c1)
 
         # frame0120
-        fieldlabels = ["Center Phase","Phase Step","Half-Range","Samples Per Point"]
+        fieldlabels = ["Center Phase","Phase Step","Half-Range","Samples/Point","Sleep Time"]
         for i,label in enumerate(fieldlabels): 
             templabel = ttk.Label(frame0120,text=label)
-            templabel.grid(column=i%2,row=math.floor(i/2)*2,padx=2,pady=2)
-            self.entries[fieldlabels[i]] = ttk.Entry(frame0120,width=16)
-            self.entries[fieldlabels[i]].grid(column=i%2,row=math.floor(i/2)*2+1, columnspan = 1,sticky="w",padx=2, pady=2) 
+            ToolTip(templabel,basicdata.tooltips[label])
+            templabel.grid(column=(i-3)%3,row=math.floor(i/3)*2,padx=2,pady=2)
+            self.entries[fieldlabels[i]] = ttk.Entry(frame0120,width=12)
+            self.entries[fieldlabels[i]].grid(column=(i-3)%3,row=math.floor(i/3)*2+1, columnspan = 1,sticky="w",padx=2, pady=2) 
             self.entries[fieldlabels[i]].insert(0,0) # this is so they show up as ints not strings...
         frame0120.grid_forget() # blank unless settingsenabled activates
 
