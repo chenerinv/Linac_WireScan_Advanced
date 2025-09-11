@@ -100,7 +100,7 @@ class WireScanApp(tk.Tk):
         browse_button_00 = ttk.Button(frame00, text='Browse', command=lambda e=entry00, t=text00: self.browse(e,t))
         browse_button_00.grid(column=2, row=0, padx=5, pady=2)
         self.entries["Browse1"] = browse_button_00
-        upload_button = ttk.Button(frame00, text='Upload', command=lambda: self.loadsetp(frame011,frame10)) #TODO remove & integrate into browse1
+        upload_button = ttk.Button(frame00, text='Upload', command=lambda: self.loadsetp(frame011,frame10,frame0120)) #TODO remove & integrate into browse1
         upload_button.grid(column=3, row=0, sticky='e', padx=5, pady=2)
         self.entries["Upload"] = upload_button
 
@@ -149,21 +149,6 @@ class WireScanApp(tk.Tk):
             self.entries[fieldlabels[i]].grid(column=(i-3)%3,row=math.floor(i/3)*2+1, columnspan = 1,sticky="w",padx=2, pady=2) 
             self.entries[fieldlabels[i]].insert(0,0) # this is so they show up as ints not strings...
         frame0120.grid_forget() # blank unless settingsenabled activates
-
-        # label = ttk.Label(frame012,text="test")
-        # label.grid(column=0,row=0,padx=2,pady=2)
-
-        # labels2 = ["xlim","ylim"]
-        # for i,text in enumerate(labels2):
-        #     label = ttk.Label(frame012,text=text)
-        #     label.grid(column=i*2,row=0,padx=2,pady=2)
-        #     ToolTip(label,basicdata.tooltips[text])
-        # entry012_0 = ttk.Entry(frame012,width=8)
-        # entry012_0.grid(column=1,row=0,padx=2,pady=2)
-        # self.entries[labels2[0]] = entry012_0
-        # entry012_1 = ttk.Entry(frame012,width=8)
-        # entry012_1.grid(column=3,row=0,padx=2,pady=2)
-        # self.entries[labels2[1]] = entry012_1
 
         # frame03 (Additional Parameters)
             # blank unless scan is started
@@ -381,8 +366,7 @@ class WireScanApp(tk.Tk):
         if state == 1: 
             frame0120.grid()
         else: 
-            frame0120.grid_forget()
-            # adjust setup
+            frame0120.grid_forget() # use Settings Enabled to check if we actually need the other params
 
     def start_readback_thread(self): 
         """Start the readback thread and clear it if already existent. Shares fetching for readbackpopup and addparampopup."""
@@ -449,7 +433,7 @@ class WireScanApp(tk.Tk):
             outdict[key] = tval
         return outdict
 
-    def loadsetp(self,frame011,frame10): 
+    def loadsetp(self,frame011,frame10,frame0120): 
         """Function for the Upload button. 
         Executes necessary actions to upload data from a JSON to the program & GUI. 
         Confirms entries are appropriate.
@@ -478,7 +462,9 @@ class WireScanApp(tk.Tk):
                 # clear what's present
                 if (key == "BLD") or (key == "Event"):
                     self.entries[key].set('')
-                else:
+                elif (key == "Settings Enabled"): 
+                    pass
+                else: 
                     self.entries[key].delete(0,tk.END)
                 # replace with set value
                 if (tempinput[key] == "") or (tempinput[key] == []) or (tempinput[key] == [None,None]): 
@@ -490,6 +476,9 @@ class WireScanApp(tk.Tk):
                     if errorcheck != False: 
                         if (key == "BLD") or (key == "Event"): # comboboxes
                             self.entries[key].set(tempinput[key])
+                        elif (key == "Settings Enabled"): 
+                            self.entries[key][0].set(tempinput[key]) # access the intvar
+                            self.settingsenabled(frame0120)
                         else: # entries
                             self.entries[key].insert(0,tempinput[key])
             # initate the actions that happen after Wire is selected
