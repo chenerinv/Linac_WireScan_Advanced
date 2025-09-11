@@ -83,7 +83,7 @@ class dataanalysis:
                 errors = np.ones(len(t_df[y]))*rms
                 (H, A, x0, sigma),pcov = gauss_fit(t_df[x], t_df[y], errors)
                 FWHM = 2.35482 * sigma
-                ps = 1./201.5e6 * FWHM/360. * 1e12
+                ps = 1./(201.5e6*4) * FWHM/360. * 1e12
                 integral = A*sigma*np.sqrt(2*np.pi)
                 x0err = np.sqrt(pcov[2][2])
                 sigmaerr = np.sqrt(pcov[3][3])
