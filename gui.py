@@ -549,7 +549,7 @@ class WireScanApp(tk.Tk):
         basicfuncs.dicttojson(self.setpout,os.path.join(self.setpout["BLD Directory"],"_".join([str(self.setpout["Timestamp"]),self.setpout["BLD"],"SetupParameters.json"])))
         # make dict of tags
         tagdict, i = {}, 1
-        for device in basicdata.allparams[self.setpout['BLD']]+basicdata.sdict[self.setpout['BLD']]+self.setpout['Additional Parameters']:
+        for device in basicdata.allparams[self.setpout['BLD']]+basicdata.pdict[self.setpout['BLD']]+self.setpout['Additional Parameters']: # this makes sure there will be a reading of the setting device
             tagdict[i]=device
             i=i+1
         self.setpout["Tags"] = tagdict
@@ -570,19 +570,34 @@ class WireScanApp(tk.Tk):
             self.metad["Pulse Length"] = m[3]-m[2]
             self.metad["Frequency"] = m[4]
         basicfuncs.dicttojson(self.metad,os.path.join(self.setpout["BLD Directory"],"_".join([str(self.setpout["Timestamp"]),self.setpout["BLD"],"Metadata.json"])))
-        
-        #TODO edit to accomodate settings
-            # maindict or coutput or setpout needs additions: 
-            # SleepTime (seconds)
-            # SettingsList (list of settings)
-            # NumRead (int, number of readings at each setting)
-            # SettingParam (no .setting, string)
-
-
-
-        # start wirescan 
-        self.plot_thread = "liveplot" 
-        self.acsyscontrol.start_scan_thread(self.scan_thread,self.setpout,self.lockentries,self.messageprint,self.plot_thread)
+        # create settings list if necessary. note this does not get saved in the setup params, as we will theoretically generate this list the same way every time.
+        if self.setpout["Settings Enabled"] == 1: 
+            if (self.setpout["Phase Step"] != 0) and (self.setpout["Half-Range"] != 0) and (self.setpout["Samples/Point"] != 0): 
+                start = self.setpout["Center Phase"]-(self.setpout["Half-Range"]+self.setpout["Half-Range"]%self.setpout["Phase Step"])
+                stop = self.setpout["Center Phase"]+(self.setpout["Half-Range"]+self.setpout["Half-Range"]%self.setpout["Phase Step"])
+                numpoints = int((stop-start)/self.setpout["Phase Step"]+1)
+                self.setpout["SettingsList"] = np.linspace(start,stop,numpoints).tolist()
+                # trim if exceeds bounds of phase shifter
+                self.setpout["SettingsList"] = [x for x in self.setpout["SettingsList"] if ((x>0) and (x<356))]
+                # convert to voltages
+                caldata = {"Voltage": [], "Phase": []}
+                with open("caldata.csv") as file: 
+                    data = file.readlines()
+                for i,line in enumerate(data):
+                    if i == 0: continue 
+                    sline = line.split(",")
+                    caldata["Voltage"].append(float(sline[0].strip()))
+                    caldata["Phase"].append(float(sline[1].strip()))
+                print(self.setpout["SettingsList"])
+                self.setpout["SettingsList"] = [basicfuncs.caldatainterp(caldata,x,"P") for x in self.setpout["SettingsList"]]
+                print(self.setpout["SettingsList"])
+            # start wirescan 
+            self.plot_thread = "liveplot" 
+            self.acsyscontrol.start_setscan_thread(self.scan_thread,self.setpout,self.lockentries,self.messageprint,self.plot_thread)
+        else: 
+            # start wirescan 
+            self.plot_thread = "liveplot" 
+            self.acsyscontrol.start_scan_thread(self.scan_thread,self.setpout,self.lockentries,self.messageprint,self.plot_thread)
         self.messageprint("Scan initiated.\n")
         # start plotting here
         if self.plot_thread in self.acsyscontrol.get_list_of_threads(): 

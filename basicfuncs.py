@@ -122,16 +122,22 @@ def rawtowires(indict,modstr):
     checklengths() # need to call again to check that the last set rounded off right.
     return outdict
 
-def caldatainterp(caldata,queryV):
+def caldatainterp(caldata,query,VorP):
     """Provide dictionary caldata (keys "Voltage" and "Phase" with lists inside) and a voltage as a query.""" 
-    for i,val in enumerate(caldata["Voltage"]): 
-        currsub = queryV-val
+    if VorP == "V": 
+        sequence = ["Voltage","Phase",]
+    elif VorP == "P": 
+        sequence = ["Phase","Voltage",]
+    else: 
+        print("Please specify if the provided value is a Voltage or Phase.")
+    for i,val in enumerate(caldata[sequence[0]]): 
+        currsub = query-val
         if currsub == 0: 
-            return caldata["Phase"][i]
+            return caldata[sequence[1]][i]
         elif currsub < 0:  
             # execute linear interpolation 
-            x1,x2,y1,y2 = caldata["Phase"][i-1], caldata["Phase"][i], caldata["Voltage"][i-1], val 
-            return y1+(y2-y1)/(x2-x1)*(queryV-x1)
+            x1,x2,y1,y2 = caldata[sequence[0]][i-1], caldata[sequence[0]][i], caldata[sequence[1]][i-1], caldata[sequence[1]][i]
+            return y1+(y2-y1)/(x2-x1)*(query-x1) # the equation is not the same for phase & voltage! it gets flipped! 
 
 def bldproc(indict,maindict):
     # indict {"settings": [], 1: [[]], 2: [[]],}
@@ -141,11 +147,12 @@ def bldproc(indict,maindict):
     caldata = {"Voltage": [], "Phase": []}
     with open("caldata.csv") as file: 
         data = file.readlines()
-    for line in data: 
+    for i,line in enumerate(data): 
+        if i == 0: continue 
         sline = line.split(",")
-        caldata["Voltage"].append(sline[0].strip())
-        caldata["Phase"].append(sline[1].strip())
-    outdict[maindict["SettingParam"]] = [caldatainterp(caldata,x) for x in indict["settings"]] # interpolated position data
+        caldata["Voltage"].append(float(sline[0].strip()))
+        caldata["Phase"].append(float(sline[1].strip()))
+    outdict[basicdata.pdict[maindict["BLD"]]] = [caldatainterp(caldata,x,"V") for x in indict["settings"]] # interpolated position data
 
     reading = basicdata.sdict[maindict["BLD"]]
     readingtag = [key for key in maindict["Tags"] if maindict["Tags"][key] == reading]

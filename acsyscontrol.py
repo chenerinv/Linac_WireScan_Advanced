@@ -58,12 +58,12 @@ async def setscan(con,threadcontext,maindict,messageprint):
     async with acsys.dpm.DPMContext(con,dpm_node="DPM03") as dpm: 
         # get kerberos ticket
         try: 
-            await dpm.enable_settings(role='testing')
+            await dpm.enable_settings(role='linac_bld')
         except: 
             messageprint("Invalid Kerberos realm.\n")
             return
 
-        await dpm.add_entry(0,maindict["SettingParam"]+".SETTING")
+        await dpm.add_entry(0,basicdata.pdict[maindict["BLD"]][0]+".SETTING")
         for key in maindict['Tags'].keys(): 
             await dpm.add_entry(key,maindict['Tags'][key]+"@e,"+maindict['Event'])
         await dpm.add_entry(-1,"L:C0VPA@p,1H") # need this to stop it from lagging unbearably
@@ -77,14 +77,16 @@ async def setscan(con,threadcontext,maindict,messageprint):
         
         # apply first setting
         await dpm.apply_settings([(0,maindict["SettingsList"][setcount])])
+        print(threadcontext['outdictcollate'])
+        print(threadcontext['outdict'])
         setcount+=1
-        time.sleep(maindict["SleepTime"]) # wait for phase to stabilize
+        time.sleep(maindict["Sleep Time"]) # wait for phase to stabilize
         async for evt_res in dpm: 
             if (evt_res.isReading) and (evt_res.tag > 0): # skip saving data on the settings or marker/timing ones
-                if countlist[evt_res.tag] <= maindict["NumRead"]:
-                    threadcontext['outdictraw']["tags"].append(evt_res.tag)
-                    threadcontext['outdictraw']["data"].append(evt_res.data)
-                    threadcontext['outdictraw']["stamps"].append(evt_res.stamp.timestamp())
+                if countlist[evt_res.tag] <= maindict["Samples/Point"]:
+                    threadcontext['outdict']["tags"].append(evt_res.tag)
+                    threadcontext['outdict']["data"].append(evt_res.data)
+                    threadcontext['outdict']["stamps"].append(evt_res.stamp.timestamp())
                     threadcontext['outdictcollate'][evt_res.tag][setcount-1].append(evt_res.data)
                     countlist[evt_res.tag]+=1
             else: pass
@@ -103,13 +105,13 @@ async def setscan(con,threadcontext,maindict,messageprint):
                 await dpm.apply_settings([(0,maindict["SettingsList"][setcount])])
                 print("set "+str(maindict["SettingsList"][setcount]))
                 setcount+=1
-                time.sleep(maindict["SleepTime"]) # wait for phase to stabilize
+                time.sleep(maindict["Sleep Time"]) # wait for phase to stabilize
 
     # maindict or coutput needs additions: 
-    # SleepTime (seconds)
+    # Sleep Time (seconds)
     # SettingsList (list of settings)
-    # NumRead (int, number of readings at each setting)
-    # SettingParam (no .setting, string)
+    # Samples/Point (int, number of readings at each setting)
+    # basicdata.pdict[maindict["BLD"]] (string with no .setting)
 
 
 async def checkp(con,paramstrs,result,tries):
@@ -180,10 +182,10 @@ class acsyscontrol:
             'thread': tmscan, 
             'finally': threading.Event(),
             'stop': threading.Event(),
-            'outdictraw': {'tags': [], 'data': [],'stamps': []},
+            'outdict': {'tags': [], 'data': [],'stamps': []},
             'outdictcollate': {"setting": coutput["SettingsList"],}
         }
-        for key in coutput['Tags']: self.thread_dict[thread_name][key] = [[] for _ in coutput["SettingsList"]]
+        for key in coutput['Tags']: self.thread_dict[thread_name]["outdictcollate"][key] = [[] for _ in coutput["SettingsList"]]
         tmscan.start()
 
     def start_scan_thread(self,thread_name,coutput,lockentries,messageprint,plot_thread_name): 
@@ -230,7 +232,7 @@ class acsyscontrol:
             acsys.run_client(setscan,threadcontext=self.thread_dict[thread_name],maindict=coutput,messageprint=messageprint)             
         finally: 
             # save data in threaddict to csv raw
-            basicfuncs.dicttocsv(self.thread_dict[thread_name]['outdictraw'],os.path.join(coutput["BLD Directory"],"_".join([str(coutput["Timestamp"]),coutput["BLD"],"RawData.csv"])))
+            basicfuncs.dicttocsv(self.thread_dict[thread_name]['outdict'],os.path.join(coutput["BLD Directory"],"_".join([str(coutput["Timestamp"]),coutput["BLD"],"RawData.csv"])))
             #TODO save processed data in threaddict 
             basicfuncs.dicttojson(self.thread_dict[thread_name]['outdictcollate'],os.path.join(coutput["BLD Directory"],"_".join([str(coutput["Timestamp"]),coutput["BLD"],"ProcData.csv"])))
             # end live plotting
