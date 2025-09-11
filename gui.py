@@ -594,7 +594,7 @@ class WireScanApp(tk.Tk):
                     if i == 0: 
                         continue 
                     sline = line.split(",")
-                    caldata["Voltage"].append(float(sline[0].strip()))
+                    caldata["Voltage"].append(float(sline[0].strip())*2)
                     caldata["Phase"].append(float(sline[1].strip()))
                 self.setpout["SettingsList"] = [basicfuncs.caldatainterp(caldata,x,"P") for x in self.setpout["SettingsList"]]
             # start wirescan 

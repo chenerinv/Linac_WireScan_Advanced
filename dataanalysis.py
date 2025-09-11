@@ -30,6 +30,10 @@ class dataanalysis:
             x = basicdata.pdict[coutput["BLD"]][i]
             y = basicdata.sdict[coutput["BLD"]][i]
 
+            if basicdata.sdict[coutput["BLD"]][i]+" Err" in list(procdata.keys()): 
+                yerr = basicdata.sdict[coutput["BLD"]][i]+" Err"
+                yerrsorted = [b for _,b in sorted(zip(procdata[x],procdata[yerr]))]
+
             # sorting lists to have data points in order of x 
             ysorted = [b for _,b in sorted(zip(procdata[x],procdata[y]))] # sorting y based on x
             xsorted = sorted(procdata[x])
@@ -103,7 +107,10 @@ class dataanalysis:
 
             basicfuncs.dicttojson(fitstats,os.path.join(coutput["BLD Directory"],"_".join([str(coutput["Timestamp"]),coutput["BLD"],"FitStats.json"])))
             
-            plt.plot(t_df[x], t_df[y], '.',color='k', label='raw')
+            if basicdata.sdict[coutput["BLD"]][i]+" Err" in list(procdata.keys()): 
+                plt.errorbar(t_df[x], t_df[y], yerr=yerrsorted, marker='.',color='k', label='raw',ls='none',capsize=4)
+            else: 
+                plt.plot(t_df[x], t_df[y], '.',color='k', label='raw')
             plt.grid(True)
             plt.ylabel('EMT signal (V)',fontsize='x-large')
             plt.xlabel('Trombone phase (deg@805 MHz)',fontsize='x-large')

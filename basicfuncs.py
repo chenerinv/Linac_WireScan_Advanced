@@ -150,7 +150,7 @@ def bldproc(indict,maindict):
         if i == 0: 
             continue 
         sline = line.split(",")
-        caldata["Voltage"].append(float(sline[0].strip()))
+        caldata["Voltage"].append(float(sline[0].strip())*2)
         caldata["Phase"].append(float(sline[1].strip()))
     outdict[basicdata.pdict[maindict["BLD"]][0]] = [caldatainterp(caldata,x,"V") for x in indict["setting"]] # interpolated position data
 

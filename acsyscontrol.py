@@ -77,8 +77,8 @@ async def setscan(con,threadcontext,maindict,messageprint):
         
         # apply first setting
         await dpm.apply_settings([(0,maindict["SettingsList"][setcount])])
-        print(threadcontext['outdictcollate'])
-        print(threadcontext['outdict'])
+        await dpm.apply_settings([(0,maindict["SettingsList"][setcount])])
+        print("set "+str(maindict["SettingsList"][setcount]))
         setcount+=1
         time.sleep(maindict["Sleep Time"]) # wait for phase to stabilize
         async for evt_res in dpm: 
@@ -234,7 +234,6 @@ class acsyscontrol:
         try: 
             acsys.run_client(setscan,threadcontext=self.thread_dict[thread_name],maindict=coutput,messageprint=messageprint)             
         finally: 
-            print(self.thread_dict[thread_name]['outdictcollate'])
             # save data in threaddict to csv raw
             basicfuncs.dicttocsv(self.thread_dict[thread_name]['outdict'],os.path.join(coutput["BLD Directory"],"_".join([str(coutput["Timestamp"]),coutput["BLD"],"RawData.csv"])))
             # save processed data in threaddict 
@@ -323,5 +322,5 @@ class acsyscontrol:
         grabd = basicfuncs.rawtowires(dictcopy,modstr)
         for i, poskey in enumerate(basicdata.pdict[modstr]): 
             plotobjects["ScatterObj"][poskey].remove()
-            plotobjects["ScatterObj"][poskey] = plotobjects["Ax"][poskey].scatter(grabd[poskey],grabd[basicdata.sdict[modstr][i]],color="tab:blue")
+            plotobjects["ScatterObj"][poskey] = plotobjects["Ax"][poskey].scatter(grabd[poskey],grabd[basicdata.sdict[modstr][i]],color="tab:blue",marker='.')
             plotobjects["Canvas"][poskey].draw()

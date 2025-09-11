@@ -2,8 +2,7 @@
 Program to collect BLD RF phase scan data. 
 
 ## Bugs & To-Do 
-- FIX LIVEPLOTTING SCALING / PLOT!!! does not look like it's plotting right, but the saved png looks good
-- save plot with errorbars in datanaalysis
+- bug where the first data point is just not right??? in terms of phase readback. but obviously it's fine because of the way we process data. this must be an acsys problem. there's some sort of latched value from the data before it was set.
 - make sure calculations in dataanalysis are consistent with the settings issued in Volts, the readback a linear interpretation of phase, etc. esp. ps etc., if the RF is now 805 MHz scale, not 201 MHz.
 - change it to not preallocate all arrays in the procdata outdictcollate because if you abort, there's a bunch of empty lists hovering around.
 
@@ -16,3 +15,5 @@ Program to collect BLD RF phase scan data.
 - also needs an alternative analysis path, esp if collecting data that turns out to be non-gaussian (not really sure what i meant by this, but there's a pure scatter if the analysis fails)
 - bug sometimes the first time it's run no settings print ??? explain? - fixed, sometimes the count went too high which is because it was <= not <
 - finish implementing setting into the gui side & the setting setup 
+- FIX LIVEPLOTTING SCALING / PLOT!!! does not look like it's plotting right, but the saved png looks good (calibration data was in primary units of Volts, but we need to issue settings in Common units, so added a *2 globally.)
+- save plot with errorbars in datanaalysis
