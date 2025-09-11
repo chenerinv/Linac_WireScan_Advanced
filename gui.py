@@ -20,7 +20,6 @@ class WireScanApp(tk.Tk):
         self.geometry("860x500")
         self.minsize(860,500)
         self.entries = {} # tk entries
-        self.buttons = {} # tk buttons
         self.setpout = {} # dictionary with setup data
         self.metad = {} # dictionary with metadata
         self.readbacks = {} # dictionary for live readbacks
@@ -100,10 +99,10 @@ class WireScanApp(tk.Tk):
         self.entries[text00] = entry00
         browse_button_00 = ttk.Button(frame00, text='Browse', command=lambda e=entry00, t=text00: self.browse(e,t))
         browse_button_00.grid(column=2, row=0, padx=5, pady=2)
-        self.buttons["Browse1"] = browse_button_00
+        self.entries["Browse1"] = browse_button_00
         upload_button = ttk.Button(frame00, text='Upload', command=lambda: self.loadsetp(frame011,frame10)) #TODO remove & integrate into browse1
         upload_button.grid(column=3, row=0, sticky='e', padx=5, pady=2)
-        self.buttons["Upload"] = upload_button
+        self.entries["Upload"] = upload_button
 
         # frame010
         labels = ["BLD","User Comment","Event","Additional Parameters"]
@@ -134,10 +133,11 @@ class WireScanApp(tk.Tk):
         # frame 012
         frame0120 = ttk.Frame(frame012)
         frame0120.grid(column=0,row=1,columnspan=1,pady=1,sticky="w")
-        self.entries["SettingsEnabled"] = tk.IntVar()
-        c1 = tk.Checkbutton(frame012,text="Settings Enabled",variable=self.entries["SettingsEnabled"],command=lambda:self.settingsenabled(frame0120))
+        self.entries["Settings Enabled"] = [tk.IntVar()] 
+        c1 = tk.Checkbutton(frame012,text="Settings Enabled",variable=self.entries["Settings Enabled"][0],command=lambda:self.settingsenabled(frame0120))
         c1.grid(column=0,row=0,padx=2,pady=2)
-        
+        self.entries["Settings Enabled"].append(c1)
+
         # frame0120
         fieldlabels = ["Center Phase","Phase Step","Half-Range","Samples Per Point"]
         for i,label in enumerate(fieldlabels): 
@@ -176,13 +176,13 @@ class WireScanApp(tk.Tk):
         self.entries[text02] = entry02
         browse_button_02 = ttk.Button(frame020, text='Browse', command=lambda e=entry02, t=text02: self.browse(e,t))
         browse_button_02.grid(column=2, row=0, sticky='w', padx=5, pady=2)
-        self.buttons["Browse2"] = browse_button_02
+        self.entries["Browse2"] = browse_button_02
         start_button = ttk.Button(frame020, text="Start", command= lambda: self.startbutton(frame03))
         start_button.grid(column=0, row=1, columnspan=1, padx=1, pady=1)
-        self.buttons["Start"] = start_button
+        self.entries["Start"] = start_button
         abort_button = ttk.Button(frame020, text="Stop", command=self.abortbutton)
         abort_button.grid(column=1, row=1, columnspan=1, padx=1, pady=1)
-        self.buttons["Stop"] = abort_button
+        self.entries["Stop"] = abort_button
 
         # frame 021
         labels2 = ["xlim","ylim"]
@@ -375,7 +375,7 @@ class WireScanApp(tk.Tk):
         self.start_readback_thread()
 
     def settingsenabled(self,frame0120):
-        state = self.entries["SettingsEnabled"].get()
+        state = self.entries["Settings Enabled"][0].get()
         if state == 1: 
             frame0120.grid()
         else: 
@@ -496,37 +496,50 @@ class WireScanApp(tk.Tk):
                 self.plotinit(wire,frame10)
             return
 
-    def lockentries(self,statestr,entrykeys,buttonkeys): 
+    def lockentries(self,statestr,keylist): 
         """Enable and disable buttons and entry widgets in the Tkinter GUI."""
-        for entry in entrykeys: 
-            self.entries[entry].config(state=statestr)
-        for button in buttonkeys: 
-            self.buttons[button].config(state=statestr)
+        for key in keylist: 
+            obj = self.entries[key]
+            if isinstance(obj,ttk.Combobox): # combobox inherits Entry class as well, so it's important it goes first in the logic
+                if statestr == "enabled": obj.config(state="readonly")
+                else: obj.config(state=statestr)
+            elif isinstance(obj,ttk.Entry): 
+                obj.config(state=statestr)
+            elif isinstance(obj,ttk.Button): 
+                obj.config(state=statestr)
+            elif isinstance(obj,list): 
+                if isinstance(obj[1],tk.Checkbutton): 
+                    if statestr == "enabled": 
+                        obj[1].config(state="active")
+                    else: 
+                        obj[1].config(state=statestr)
+                else: print("Key "+key+" not identified when locking!")
+            else: print("Key "+key+" not identified when locking!")
 
     def startbutton(self,frame14): 
         """Execute the setup needed for a scan and start the scan."""
         # locking to modification
-        self.lockentries("disabled",basicdata.lockedentries,basicdata.lockedbuttons) 
+        self.lockentries("disabled",basicdata.lockedentries) 
         self.scan_thread = "mainscan"
         # check thread isn't open+unset or open+set+incomplete
         if self.scan_thread in self.acsyscontrol.get_list_of_threads(): # if thread exists and is unset
             self.messageprint("Starting another scan is not allowed. Another scan is ongoing.\n")
-            self.lockentries("enabled",basicdata.lockedentries,basicdata.lockedbuttons)
+            self.lockentries("enabled",basicdata.lockedentries)
             return
         elif self.acsyscontrol.check_finally(self.scan_thread) is False:  # or if thread exists, is set, but finally isn't done (to accomodate lack of joining in abort)
             self.messageprint("Starting another scan is not allowed. Another scan is closing.\n")
-            self.lockentries("enabled",basicdata.lockedentries,basicdata.lockedbuttons)
+            self.lockentries("enabled",basicdata.lockedentries)
             return
         # main check to see if the setup is appropriate
         self.setpout = self.checkentriescorrect(self.entries) 
         if self.setpout == False: 
-            self.lockentries("enabled",basicdata.lockedentries,basicdata.lockedbuttons)
+            self.lockentries("enabled",basicdata.lockedentries)
             return
         # checking there's no missing keys
         for item in basicdata.requiredkeys: 
             if item not in list(self.setpout.keys()): 
                 self.messageprint(item+" is a required value.\n")
-                self.lockentries("enabled",basicdata.lockedentries,basicdata.lockedbuttons)
+                self.lockentries("enabled",basicdata.lockedentries)
                 return
         # add new frame with additional readbacks
         self.addparampopup(frame14,self.setpout["Additional Parameters"])              
@@ -539,7 +552,7 @@ class WireScanApp(tk.Tk):
             self.setpout["BLD Directory"] = savepath
         else: 
             self.messageprint("Folder for data unable to be created.\n")
-            self.lockentries("enabled",basicdata.lockedentries,basicdata.lockedbuttons)
+            self.lockentries("enabled",basicdata.lockedentries)
             return
         basicfuncs.dicttojson(self.setpout,os.path.join(self.setpout["BLD Directory"],"_".join([str(self.setpout["Timestamp"]),self.setpout["BLD"],"SetupParameters.json"])))
         # make dict of tags
@@ -590,7 +603,7 @@ class WireScanApp(tk.Tk):
         try: 
             if self.scan_thread in self.acsyscontrol.get_list_of_threads(): # kill existing thread if present
                 self.acsyscontrol.end_any_thread(self.scan_thread)
-                self.lockentries("enabled",basicdata.lockedentries,basicdata.lockedbuttons)
+                self.lockentries("enabled",basicdata.lockedentries)
                 self.messageprint("Scan ended by user.\n") 
             else: 
                 self.messageprint("No scan to end.\n")

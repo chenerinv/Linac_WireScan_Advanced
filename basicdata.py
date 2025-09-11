@@ -36,6 +36,11 @@ tooltips = {
     "Monitor Max": "[Not functional] Maximum values for the monitors, separated by comma and indexed matching 'Monitors.'",
     "xlim": "Optional. Set a fixed range for plot export. Input a range separated by a comma, e.g. 20, 50",
     "ylim": "Optional. Set a fixed range for plot export. Input a range separated by a comma, e.g. 20, 50",
+    "Settings Enabled": "Check to reveal the options for configuring a scan. Leave unchecked to only collect, not set.",
+    "Center Phase": "Value (deg) the range should center around.",
+    "Phase Step": "Step (deg) in phase of the measurement.",
+    "Half-Range": "Range of half the scan in degrees. May be slightly over if step does not match correctly.",
+    "Samples Per Point": "Number of samples to take on event at each phase.",
 }
 
 helpstrings = {
@@ -78,10 +83,15 @@ checkcorrect = {
     "Save Directory": str,
     "xlim": str,
     "ylim": str,
+    "Settings Enabled": int,
+    "Center Phase": float,
+    "Phase Step": float,
+    "Half-Range": float,
+    "Samples Per Point": int,
 }
 
 requiredkeys = ["BLD", "Event", "Save Directory"]
 skippedkeys = ["Messages", "Setup Parameters", "Help1", "Help2", "Help3"]
 ignorekeys = ["Timestamp","BLD Directory","Direction","Source","L:D7TOR","Pulse Length", "Frequency","Tags"]
-lockedentries = ["BLD","Event","Save Directory","User Comment","Additional Parameters","xlim","ylim"]
-lockedbuttons = ["Browse1", "Upload", "Browse2","Start"] 
+lockedentries = ["BLD","Event","Save Directory","User Comment","Additional Parameters","xlim","ylim",
+                 "Center Phase","Phase Step","Half-Range","Samples Per Point","Browse1", "Upload", "Browse2","Start","Settings Enabled"]

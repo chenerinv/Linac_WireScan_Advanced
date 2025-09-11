@@ -237,7 +237,7 @@ class acsyscontrol:
             if plot_thread_name in self.get_list_of_threads(): 
                 self.thread_dict[plot_thread_name]['stop'].set()
             # unlock entries
-            lockentries("enabled",basicdata.lockedentries,basicdata.lockedbuttons) 
+            lockentries("enabled",basicdata.lockedentries) 
             # get average of the tags & save
             coutput["TagAvg"] = {}
             for key in coutput["Tags"].keys(): 
@@ -271,7 +271,7 @@ class acsyscontrol:
             if plot_thread_name in self.get_list_of_threads(): 
                 self.thread_dict[plot_thread_name]['stop'].set()
             # unlock entries
-            lockentries("enabled",basicdata.lockedentries,basicdata.lockedbuttons) 
+            lockentries("enabled",basicdata.lockedentries) 
             # process data
             procdata = basicfuncs.rawtowires(self.thread_dict[thread_name]['outdict'],coutput["BLD"])
             basicfuncs.dicttocsv(procdata,os.path.join(coutput["BLD Directory"],"_".join([str(coutput["Timestamp"]),coutput["BLD"],"ProcData.csv"])))
