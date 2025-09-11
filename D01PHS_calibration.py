@@ -6,7 +6,8 @@ with open ("caldata.csv") as file:
 voltageD01 = []
 phaseD01 = []
 for i,line in enumerate(data):
-    if i == 0: continue
+    if i == 0: 
+        continue
     vals = line.split(",")
     voltageD01.append(float(vals[0].strip())*2)
     phaseD01.append(float(vals[1].strip()))

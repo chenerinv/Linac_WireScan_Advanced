@@ -85,13 +85,12 @@ async def setscan(con,threadcontext,maindict,messageprint):
             if threadcontext['stop'].is_set(): 
                 break
             if (evt_res.isReading) and (evt_res.tag > 0): # skip saving data on the settings or marker/timing ones
-                if countlist[evt_res.tag] <= maindict["Samples/Point"]:
+                if countlist[evt_res.tag] < maindict["Samples/Point"]:
                     threadcontext['outdict']["tags"].append(evt_res.tag)
                     threadcontext['outdict']["data"].append(evt_res.data)
                     threadcontext['outdict']["stamps"].append(evt_res.stamp.timestamp())
                     threadcontext['outdictcollate'][evt_res.tag][setcount-1].append(evt_res.data)
                     countlist[evt_res.tag]+=1
-            else: pass
 
             # check if enough data was collected for each item on the list
             checkpass = 1
@@ -101,7 +100,8 @@ async def setscan(con,threadcontext,maindict,messageprint):
                     break
             # if so, apply 
             if checkpass == 1: 
-                for key in countlist: countlist[key] = 0
+                for key in countlist: 
+                    countlist[key] = 0
                 if setcount > len(maindict["SettingsList"])-1:
                     threadcontext['stop'].set()
                     return
@@ -187,7 +187,8 @@ class acsyscontrol:
             'outdict': {'tags': [], 'data': [],'stamps': []},
             'outdictcollate': {"setting": coutput["SettingsList"],}
         }
-        for key in coutput['Tags']: self.thread_dict[thread_name]["outdictcollate"][key] = [[] for _ in coutput["SettingsList"]]
+        for key in coutput['Tags']: 
+            self.thread_dict[thread_name]["outdictcollate"][key] = [[] for _ in coutput["SettingsList"]]
         tmscan.start()
 
     def start_scan_thread(self,thread_name,coutput,lockentries,messageprint,plot_thread_name): 

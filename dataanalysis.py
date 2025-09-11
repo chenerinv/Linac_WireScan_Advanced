@@ -1,15 +1,12 @@
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
-from scipy.optimize import curve_fit as cf
 import basicdata
 import basicfuncs
 import os
 from scipy.signal import find_peaks, peak_widths
 from scipy.optimize import curve_fit
-from functools import reduce
 import pandas as pd
-import scipy.integrate as integrate
 
 class dataanalysis: 
     def __init__(self): 

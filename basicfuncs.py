@@ -1,6 +1,5 @@
 import json
 import csv
-import datetime
 import numpy as np
 import itertools
 import basicdata
@@ -148,20 +147,17 @@ def bldproc(indict,maindict):
     with open("caldata.csv") as file: 
         data = file.readlines()
     for i,line in enumerate(data): 
-        if i == 0: continue 
+        if i == 0: 
+            continue 
         sline = line.split(",")
         caldata["Voltage"].append(float(sline[0].strip()))
         caldata["Phase"].append(float(sline[1].strip()))
     outdict[basicdata.pdict[maindict["BLD"]][0]] = [caldatainterp(caldata,x,"V") for x in indict["setting"]] # interpolated position data
 
-    reading = basicdata.sdict[maindict["BLD"]]
+    reading = basicdata.sdict[maindict["BLD"]][0]
     for key in maindict["Tags"]: 
         if maindict["Tags"][key] == reading:
             readingtag = key
-
-    print(readingtag)
-    print(list(indict.keys()))
-
     outdict[reading] = [np.average(x) for x in indict[readingtag]]
     outdict[reading+" Err"] = [np.std(x) for x in indict[readingtag]]
 

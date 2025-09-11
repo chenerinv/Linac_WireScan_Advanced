@@ -229,8 +229,10 @@ class WireScanApp(tk.Tk):
 
     def change_focus(self,event):
         """Removes focus from previous focus when clicked elsewhere."""
-        try: event.widget.focus_set()
-        except: pass # TODO FIX THIS!!! it bugs out at the combobox...
+        try: 
+            event.widget.focus_set()
+        except: 
+            pass # TODO FIX THIS!!! it bugs out at the combobox...
 
     def browse(self, entry_widget, text):
         """Browse for a file."""
@@ -271,8 +273,10 @@ class WireScanApp(tk.Tk):
         plotobj = {"Frame":{},"Canvas":{},"Fig":{},"Ax":{},"ScatterObj":{}}
         # building and saving all needed objects in plotobjects
         j = 0
-        if value == 0: g = basicdata.plots
-        else: g = basicdata.pdict[value]
+        if value == 0: 
+            g = basicdata.plots
+        else: 
+            g = basicdata.pdict[value]
 
         for i,key in enumerate(g): 
             plotobj["Frame"][key] = ttk.Frame(frame10)
@@ -473,7 +477,7 @@ class WireScanApp(tk.Tk):
                     if key in ["xlim", "ylim"]: 
                         tempinput[key] = str(tempinput[key])[1:-1]
                     errorcheck = self.checkentriescorrect({key: tempinput[key]}) # a check that the value is compatible
-                    if errorcheck != False: 
+                    if errorcheck: 
                         if (key == "BLD") or (key == "Event"): # comboboxes
                             self.entries[key].set(tempinput[key])
                         elif (key == "Settings Enabled"): 
@@ -493,8 +497,10 @@ class WireScanApp(tk.Tk):
         for key in keylist: 
             obj = self.entries[key]
             if isinstance(obj,ttk.Combobox): # combobox inherits Entry class as well, so it's important it goes first in the logic
-                if statestr == "enabled": obj.config(state="readonly")
-                else: obj.config(state=statestr)
+                if statestr == "enabled": 
+                    obj.config(state="readonly")
+                else: 
+                    obj.config(state=statestr)
             elif isinstance(obj,ttk.Entry): 
                 obj.config(state=statestr)
             elif isinstance(obj,ttk.Button): 
@@ -505,8 +511,10 @@ class WireScanApp(tk.Tk):
                         obj[1].config(state="active")
                     else: 
                         obj[1].config(state=statestr)
-                else: print("Key "+key+" not identified when locking!")
-            else: print("Key "+key+" not identified when locking!")
+                else: 
+                    print("Key "+key+" not identified when locking!")
+            else: 
+                print("Key "+key+" not identified when locking!")
 
     def startbutton(self,frame14): 
         """Execute the setup needed for a scan and start the scan."""
@@ -524,7 +532,7 @@ class WireScanApp(tk.Tk):
             return
         # main check to see if the setup is appropriate
         self.setpout = self.checkentriescorrect(self.entries) 
-        if self.setpout == False: 
+        if not self.setpout: 
             self.lockentries("enabled",basicdata.lockedentries)
             return
         # checking there's no missing keys
@@ -553,7 +561,6 @@ class WireScanApp(tk.Tk):
             tagdict[i]=device
             i=i+1
         self.setpout["Tags"] = tagdict
-        print(tagdict)
         # collect metadata 
         self.metad = {key:self.setpout[key] for key in ['Event', 'User Comment','Timestamp','BLD Directory','Tags']}
         if self.setpout["Event"] == "0A": 
@@ -584,7 +591,8 @@ class WireScanApp(tk.Tk):
                 with open("caldata.csv") as file: 
                     data = file.readlines()
                 for i,line in enumerate(data):
-                    if i == 0: continue 
+                    if i == 0: 
+                        continue 
                     sline = line.split(",")
                     caldata["Voltage"].append(float(sline[0].strip()))
                     caldata["Phase"].append(float(sline[1].strip()))
