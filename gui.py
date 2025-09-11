@@ -588,9 +588,7 @@ class WireScanApp(tk.Tk):
                     sline = line.split(",")
                     caldata["Voltage"].append(float(sline[0].strip()))
                     caldata["Phase"].append(float(sline[1].strip()))
-                print(self.setpout["SettingsList"])
                 self.setpout["SettingsList"] = [basicfuncs.caldatainterp(caldata,x,"P") for x in self.setpout["SettingsList"]]
-                print(self.setpout["SettingsList"])
             # start wirescan 
             self.plot_thread = "liveplot" 
             self.acsyscontrol.start_setscan_thread(self.scan_thread,self.setpout,self.lockentries,self.messageprint,self.plot_thread)

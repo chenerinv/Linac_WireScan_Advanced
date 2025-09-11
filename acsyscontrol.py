@@ -32,7 +32,7 @@ async def updatereadback_1H(con,threadcontext,strvardict):
 async def runscan(con,threadcontext,maindict,messageprint): 
     """Save data."""
     # setup context
-    async with acsys.dpm.DPMContext(con,dpm_node="DPM03") as dpm:    
+    async with acsys.dpm.DPMContext(con,dpm_node="DPM03") as dpm: 
         # add acquisition requests
         for key in maindict['Tags'].keys():
             await dpm.add_entry(key,maindict['Tags'][key]+"@e,"+maindict['Event'])
@@ -82,6 +82,8 @@ async def setscan(con,threadcontext,maindict,messageprint):
         setcount+=1
         time.sleep(maindict["Sleep Time"]) # wait for phase to stabilize
         async for evt_res in dpm: 
+            if threadcontext['stop'].is_set(): 
+                break
             if (evt_res.isReading) and (evt_res.tag > 0): # skip saving data on the settings or marker/timing ones
                 if countlist[evt_res.tag] <= maindict["Samples/Point"]:
                     threadcontext['outdict']["tags"].append(evt_res.tag)
@@ -94,7 +96,7 @@ async def setscan(con,threadcontext,maindict,messageprint):
             # check if enough data was collected for each item on the list
             checkpass = 1
             for key in countlist: 
-                if countlist[key] != 10: 
+                if countlist[key] != maindict["Samples/Point"]: 
                     checkpass = 0
                     break
             # if so, apply 
@@ -102,6 +104,7 @@ async def setscan(con,threadcontext,maindict,messageprint):
                 for key in countlist: countlist[key] = 0
                 if setcount > len(maindict["SettingsList"])-1:
                     threadcontext['stop'].set()
+                    return
                 await dpm.apply_settings([(0,maindict["SettingsList"][setcount])])
                 print("set "+str(maindict["SettingsList"][setcount]))
                 setcount+=1
@@ -112,7 +115,6 @@ async def setscan(con,threadcontext,maindict,messageprint):
     # SettingsList (list of settings)
     # Samples/Point (int, number of readings at each setting)
     # basicdata.pdict[maindict["BLD"]] (string with no .setting)
-
 
 async def checkp(con,paramstrs,result,tries):
     """Check a parameter value."""
@@ -231,9 +233,10 @@ class acsyscontrol:
         try: 
             acsys.run_client(setscan,threadcontext=self.thread_dict[thread_name],maindict=coutput,messageprint=messageprint)             
         finally: 
+            print(self.thread_dict[thread_name]['outdictcollate'])
             # save data in threaddict to csv raw
             basicfuncs.dicttocsv(self.thread_dict[thread_name]['outdict'],os.path.join(coutput["BLD Directory"],"_".join([str(coutput["Timestamp"]),coutput["BLD"],"RawData.csv"])))
-            #TODO save processed data in threaddict 
+            # save processed data in threaddict 
             basicfuncs.dicttojson(self.thread_dict[thread_name]['outdictcollate'],os.path.join(coutput["BLD Directory"],"_".join([str(coutput["Timestamp"]),coutput["BLD"],"ProcData.csv"])))
             # end live plotting
             if plot_thread_name in self.get_list_of_threads(): 
@@ -247,17 +250,19 @@ class acsyscontrol:
                 coutput["TagAvg"][coutput["Tags"][key]] = [avg, std, len]
             basicfuncs.dicttojson(coutput["TagAvg"],os.path.join(coutput["BLD Directory"],"_".join([str(coutput["Timestamp"]),coutput["BLD"],"TagAvgs.json"])))
             # analyze data 
-            try: 
-                if self.thread_dict[thread_name]['outdict']['tags'] != []: # skip analysis if the dict is empty
-                    # average data and interpolate the 
-                    avgdata = basicfuncs.bldproc(self.thread_dict[thread_name]['outdictcollate'],coutput) 
-                    basicfuncs.dicttojson(avgdata,os.path.join(coutput["BLD Directory"],"_".join([str(coutput["Timestamp"]),coutput["BLD"],"AvgData.csv"])))
+            
+            if self.thread_dict[thread_name]['outdict']['tags'] != []: # skip analysis if the dict is empty
+                # average data and interpolate the 
+                avgdata = basicfuncs.bldproc(self.thread_dict[thread_name]['outdictcollate'],coutput) 
+                basicfuncs.dicttojson(avgdata,os.path.join(coutput["BLD Directory"],"_".join([str(coutput["Timestamp"]),coutput["BLD"],"AvgData.csv"])))
+                try: 
                     self.dataanalysis.endscanproc(avgdata,coutput,xlim=coutput["xlim"],ylim=coutput["ylim"])
                     messageprint("Analysis complete. Data saved at "+coutput["BLD Directory"]+"\n")
-                else: 
-                    messageprint("No data was collected, analysis not initiated. \n")
-            except: 
-                messageprint("There was an issue with the analysis.\n")
+                except: 
+                    messageprint("There was an issue with the analysis.\n")
+            else: 
+                messageprint("No data was collected, analysis not initiated. \n")
+
             # thread done, can be closed
             self.thread_dict[thread_name]['finally'].set()
             messageprint("Scan closed.\n")

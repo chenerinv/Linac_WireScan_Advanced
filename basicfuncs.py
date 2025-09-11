@@ -152,10 +152,15 @@ def bldproc(indict,maindict):
         sline = line.split(",")
         caldata["Voltage"].append(float(sline[0].strip()))
         caldata["Phase"].append(float(sline[1].strip()))
-    outdict[basicdata.pdict[maindict["BLD"]]] = [caldatainterp(caldata,x,"V") for x in indict["settings"]] # interpolated position data
+    outdict[basicdata.pdict[maindict["BLD"]][0]] = [caldatainterp(caldata,x,"V") for x in indict["setting"]] # interpolated position data
 
     reading = basicdata.sdict[maindict["BLD"]]
-    readingtag = [key for key in maindict["Tags"] if maindict["Tags"][key] == reading]
+    for key in maindict["Tags"]: 
+        if maindict["Tags"][key] == reading:
+            readingtag = key
+
+    print(readingtag)
+    print(list(indict.keys()))
 
     outdict[reading] = [np.average(x) for x in indict[readingtag]]
     outdict[reading+" Err"] = [np.std(x) for x in indict[readingtag]]
