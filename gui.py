@@ -15,7 +15,7 @@ from dataanalysis import dataanalysis
 
 class WireScanApp(tk.Tk):
     def __init__(self):
-        super().__init__()
+        super().__init__() 
         self.title("Bunch Length Detector Data Collector")
         self.geometry("880x550")
         self.minsize(880,550)
