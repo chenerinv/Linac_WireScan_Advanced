@@ -68,23 +68,22 @@ async def setscan(con,threadcontext,maindict,messageprint):
             await dpm.add_entry(key,maindict['Tags'][key]+"@e,"+maindict['Event'])
         await dpm.add_entry(-1,"L:C0VPA@p,1H") # need this to stop it from lagging unbearably
 
-        await dpm.start()
-        
         countlist = {}
         for tag in maindict['Tags']: 
             countlist[tag] = 0
         setcount = 0
-        
+
         # apply first setting
-        await dpm.apply_settings([(0,maindict["SettingsList"][setcount])])
         await dpm.apply_settings([(0,maindict["SettingsList"][setcount])])
         print("set "+str(maindict["SettingsList"][setcount]))
         setcount+=1
-        time.sleep(maindict["Sleep Time"]) # wait for phase to stabilize
+        inittime = time.time()
+
+        await dpm.start()
         async for evt_res in dpm: 
             if threadcontext['stop'].is_set(): 
                 break
-            if (evt_res.isReading) and (evt_res.tag > 0): # skip saving data on the settings or marker/timing ones
+            if (evt_res.isReading) and (evt_res.tag > 0) and (time.time()-inittime > maindict["Sleep Time"]): # skip saving data on the settings or marker/timing ones
                 if countlist[evt_res.tag] < maindict["Samples/Point"]:
                     threadcontext['outdict']["tags"].append(evt_res.tag)
                     threadcontext['outdict']["data"].append(evt_res.data)
@@ -108,7 +107,7 @@ async def setscan(con,threadcontext,maindict,messageprint):
                 await dpm.apply_settings([(0,maindict["SettingsList"][setcount])])
                 print("set "+str(maindict["SettingsList"][setcount]))
                 setcount+=1
-                time.sleep(maindict["Sleep Time"]) # wait for phase to stabilize
+                inittime = time.time()
 
     # maindict or coutput needs additions: 
     # Sleep Time (seconds)

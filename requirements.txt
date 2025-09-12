@@ -1,0 +1,8 @@
+acsys==0.12.8
+matplotlib==3.7.2
+matplotlib-inline==0.1.6
+numpy==1.25.2
+pandas==2.0.3
+python==3.12.9 
+scipy==1.15.2
+tk==8.6.13
